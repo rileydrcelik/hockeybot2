@@ -6,8 +6,8 @@
 #define IN3 6  // Left motor dir 1
 #define IN4 7  // Left motor dir 2
 
-const int baseSpeedL = 0; // adjust if needed for straightness
-const int baseSpeedR = 255;  // adjust if needed for straightness
+const int baseSpeedL = 128;//128; // adjust if needed for straightness
+const int baseSpeedR = 128;  // adjust if needed for straightness
 
 void setup() {
   // Set up motor pins
