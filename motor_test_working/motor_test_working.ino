@@ -21,7 +21,7 @@ void setup() {
   digitalWrite(IN4, HIGH);
 
   // Start motors at your desired speed
-  analogWrite(ENA, baseSpeedL); // Right motor speed
+  analogWrite(ENA, baseSpeedR); // Right motor speed
   analogWrite(ENB, baseSpeedR); // Left motor speed
 }
 

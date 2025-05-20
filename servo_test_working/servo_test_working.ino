@@ -7,6 +7,8 @@
 #define ENA 8     // Motor 1 speed
 #define ENB 13    // Motor 2 speed
 
+#define SPEED 64 //motor test speed
+
 void setup() {
   // Set all pins as OUTPUT
   pinMode(IN1, OUTPUT);
@@ -23,8 +25,8 @@ void setup() {
   digitalWrite(IN4, HIGH);
 
   // Start both motors at half speed
-  analogWrite(ENA, 128);
-  analogWrite(ENB, 128);
+  analogWrite(ENA, SPEED);
+  analogWrite(ENB, SPEED);
 }
 
 void loop() {
@@ -45,8 +47,8 @@ void loop() {
   digitalWrite(IN4, LOW);
 
   // Run at half speed
-  analogWrite(ENA, 128);
-  analogWrite(ENB, 128);
+  analogWrite(ENA, SPEED);
+  analogWrite(ENB, SPEED);
 
   delay(2000);
 
@@ -63,8 +65,8 @@ void loop() {
   digitalWrite(IN4, HIGH);
 
   // Loop continues...
-  analogWrite(ENA, 128);
-  analogWrite(ENB, 128);
+  analogWrite(ENA, SPEED);
+  analogWrite(ENB, SPEED);
   delay(2000);
 
   analogWrite(ENA, 0);

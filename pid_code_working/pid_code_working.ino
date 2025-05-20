@@ -15,14 +15,14 @@ QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
-const int maxSpeedL = 128;
-const int maxSpeedR = 128;
-const int baseSpeedL = 64;
-const int baseSpeedR = 64;
+const int maxSpeedL = 255;
+const int maxSpeedR = 200;
+const int baseSpeedL = 75;
+const int baseSpeedR = 55;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.006, Ki = 0.0, Kd = .02;  // Tune these!
+double Kp = 0.03, Ki = 0.0, Kd = .002;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
@@ -35,7 +35,7 @@ void setup() {
   // configure the sensors
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5}, SensorCount);
-  qtr.setEmitterPin(9);
+  qtr.setEmitterPin(31);
 
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -52,7 +52,7 @@ void setup() {
   delay(500);
 
   // PID setup
-  setpoint = 2500; // center of 0-5000 for 6 sensors
+  setpoint = 2000; // center of 0-5000 for 6 sensors
   pid.SetMode(AUTOMATIC);
   pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
 }
@@ -64,8 +64,8 @@ void moveMotors(int leftSpeed, int rightSpeed) {
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
 
-  analogWrite(ENA, constrain(abs(leftSpeed), 0, maxSpeedL));
-  analogWrite(ENB, constrain(abs(rightSpeed), 0, maxSpeedR));
+  analogWrite(ENA, constrain(abs(rightSpeed), 0, maxSpeedR));
+  analogWrite(ENB, constrain(abs(leftSpeed), 0, maxSpeedL));
 }
 
 void loop() {
@@ -83,7 +83,7 @@ void loop() {
   leftSpeed = constrain(leftSpeed, 0, maxSpeedL);
   rightSpeed = constrain(rightSpeed, 0, maxSpeedR);
 
-  moveMotors(rightSpeed, leftSpeed); // swapped order (your setup)
+  moveMotors(leftSpeed, rightSpeed); // swapped order (your setup)
 
   // Debugging output
   Serial.print("POS: "); Serial.print(input);
