@@ -1,13 +1,13 @@
 // Motor driver pins
-#define ENA 2  // Right motor speed
+#define ENA 9  // Right motor speed
 #define IN1 3  // Right motor dir 1
 #define IN2 4  // Right motor dir 2
-#define ENB 5  // Left motor speed
+#define ENB 10  // Left motor speed
 #define IN3 6  // Left motor dir 1
 #define IN4 7  // Left motor dir 2
 
-const int baseSpeedL = 128;//128; // adjust if needed for straightness
-const int baseSpeedR = 128;  // adjust if needed for straightness
+const int baseSpeedL = 75;//128; // adjust if needed for straightness
+const int baseSpeedR = 55;  // adjust if needed for straightness
 
 void setup() {
   // Set up motor pins

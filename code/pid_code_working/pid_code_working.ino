@@ -2,10 +2,10 @@
 #include <PID_v1.h>
 
 // Motor driver pins
-#define ENA 2  // Right motor speed (PWM)
+#define ENA 9  // Right motor speed (PWM)
 #define IN1 3  // Right motor dir 1
 #define IN2 4  // Right motor dir 2
-#define ENB 5  // Left motor speed (PWM)
+#define ENB 10  // Left motor speed (PWM)
 #define IN3 6  // Left motor dir 1
 #define IN4 7  // Left motor dir 2
 
@@ -22,7 +22,7 @@ const int baseSpeedR = 55;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.03, Ki = 0.0, Kd = .002;  // Tune these!
+double Kp = 0.3, Ki = 0.0, Kd = .2;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
@@ -35,7 +35,7 @@ void setup() {
   // configure the sensors
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5}, SensorCount);
-  qtr.setEmitterPin(31);
+  qtr.setEmitterPin(12);
 
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
