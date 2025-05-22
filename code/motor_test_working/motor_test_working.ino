@@ -6,8 +6,8 @@
 #define IN3 6  // Left motor dir 1
 #define IN4 7  // Left motor dir 2
 
-const int baseSpeedL = 75;//128; // adjust if needed for straightness
-const int baseSpeedR = 55;  // adjust if needed for straightness
+const int baseSpeedL = 70;//128; // adjust if needed for straightness
+const int baseSpeedR = 40;  // adjust if needed for straightness
 
 void setup() {
   // Set up motor pins
@@ -22,7 +22,7 @@ void setup() {
 
   // Start motors at your desired speed
   analogWrite(ENA, baseSpeedR); // Right motor speed
-  analogWrite(ENB, baseSpeedR); // Left motor speed
+  analogWrite(ENB, baseSpeedL); // Left motor speed
 }
 
 void loop() {

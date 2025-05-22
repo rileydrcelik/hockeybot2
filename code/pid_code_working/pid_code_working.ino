@@ -17,12 +17,12 @@ uint16_t sensorValues[SensorCount];
 // Motor speed limits and base speeds (tuned for your mismatched motors)
 const int maxSpeedL = 255;
 const int maxSpeedR = 200;
-const int baseSpeedL = 75;
-const int baseSpeedR = 55;
+const int baseSpeedL = 70;
+const int baseSpeedR = 40;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.3, Ki = 0.0, Kd = .2;  // Tune these!
+double Kp = 0.03, Ki = 0.0, Kd = .02;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
