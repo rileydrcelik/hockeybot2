@@ -20,13 +20,16 @@ const int maxSpeedR = 200;
 const int baseSpeedL = 30;
 const int baseSpeedR = 60;
 
-// PID variables
-double input, output, setpoint;
-double Kp = 0.002, Ki = 0.0, Kd = .006;  // Tune these!
-PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
+double input;
 
 void setup() {
   Serial.begin(9600);
+  while (!Serial);  // Wait for serial to connect (especially useful on Leonardo)
+  Serial.println("Master ready");
+
+
+
+
 
   // Set up motor pins
   pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
@@ -48,13 +51,7 @@ void setup() {
   }
   digitalWrite(LED_BUILTIN, LOW); // done calibrating
 
-  Serial.println("Calibration done.");
   delay(500);
-
-  // PID setup
-  setpoint = 3250; // center of 0-5000 for 6 sensors
-  pid.SetMode(AUTOMATIC);
-  pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
 }
 
 void moveMotors(int leftSpeed, int rightSpeed) {
@@ -69,27 +66,14 @@ void moveMotors(int leftSpeed, int rightSpeed) {
 }
 
 void loop() {
-  // Read QTR sensor position (0 = far left, 5000 = far right)
   input = qtr.readLineBlack(sensorValues);
+  if ((input < 250) || (input > 4500)){
+    moveMotors(baseSpeedL + 10, baseSpeedR);
+    Serial.println("Ping");
+    delay(1000);
+  }
+  moveMotors(baseSpeedL, baseSpeedR);
 
-  // Run PID
-  pid.Compute();
-
-  // Apply PID correction
-  int leftSpeed  = baseSpeedL + output;
-  int rightSpeed = baseSpeedR - output;
-
-  // Constrain speeds
-  leftSpeed = constrain(leftSpeed, 0, maxSpeedL);
-  rightSpeed = constrain(rightSpeed, 0, maxSpeedR);
-
-  moveMotors(leftSpeed, rightSpeed); // swapped order (your setup)
-
-  // Debugging output
-  Serial.print("POS: "); Serial.print(input);
-  Serial.print(" | OUT: "); Serial.print(output);
-  Serial.print(" | L: "); Serial.print(leftSpeed);
-  Serial.print(" | R: "); Serial.println(rightSpeed);
-
-  delay(10);
+  
+  delay(2000);
 }

@@ -32,6 +32,20 @@ void setup() {
   analogWrite(ENB, baseSpeedR); // Left motor speed
 }
 
+void turn(int time = 800){
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENA, baseSpeedL);
+  analogWrite(ENB, baseSpeedR);
+  delay(time);
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+}
+
 void loop() {
-  // Nothing needed, just keep going straight
+  turn();
+  delay(9999999);
 }

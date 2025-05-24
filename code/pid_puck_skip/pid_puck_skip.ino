@@ -57,7 +57,20 @@ void setup() {
   pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
 }
 
-void moveMotors(int leftSpeed, int rightSpeed) {
+void turn(int time = 575){
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+
+  analogWrite(ENA, baseSpeedL);
+  analogWrite(ENB, baseSpeedR);
+  delay(time);
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+}
+
+void moveMotors(int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR) {
   // Forward direction for both motors
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
@@ -71,6 +84,12 @@ void moveMotors(int leftSpeed, int rightSpeed) {
 void loop() {
   // Read QTR sensor position (0 = far left, 5000 = far right)
   input = qtr.readLineBlack(sensorValues);
+
+  if ((input < 250) || (input > 4500)){
+    turn();
+    //moveMotors(baseSpeedL+10, baseSpeedR);
+    delay(10000);
+  }
 
   // Run PID
   pid.Compute();
