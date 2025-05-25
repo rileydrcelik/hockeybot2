@@ -10,19 +10,19 @@
 #define IN4 7  // Left motor dir 2
 
 // QTR sensor array
-const uint8_t SensorCount = 6;
+const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
-const int maxSpeedL = 64;
-const int maxSpeedR = 200;
-const int baseSpeedL = 30;
-const int baseSpeedR = 60;
+const int maxSpeedL = 90;
+const int maxSpeedR = 90;
+const int baseSpeedL = 45;
+const int baseSpeedR = 45;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.002, Ki = 0.0, Kd = .006;  // Tune these!
+double Kp = 0.000075, Ki = 0.0, Kd = .006;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
@@ -34,7 +34,7 @@ void setup() {
 
   // configure the sensors
   qtr.setTypeAnalog();
-  qtr.setSensorPins((const uint8_t[]){A5, A4, A3, A2, A1, A0}, SensorCount);
+  qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
   qtr.setEmitterPin(12);
 
   delay(500);
@@ -52,7 +52,7 @@ void setup() {
   delay(500);
 
   // PID setup
-  setpoint = 3250; // center of 0-5000 for 6 sensors
+  setpoint = 3500; // center of 0-5000 for 6 sensors
   pid.SetMode(AUTOMATIC);
   pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
 }
