@@ -49,6 +49,7 @@ void setup()
   for (uint16_t i = 0; i < 400; i++)
   {
     qtr.calibrate();
+    
   }
   digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
