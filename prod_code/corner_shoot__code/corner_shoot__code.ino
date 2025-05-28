@@ -10,12 +10,15 @@
 #define IN4 7  // Left motor dir 2
 
 int cn = 0;
-//cn for tarczech
+//cn for crossczech
 
 // QTR sensor array
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
+
+uint16_t sensorMin[8] = {669, 590, 603, 594, 515, 545, 634, 658};
+uint16_t sensorMax[8] = {750, 722, 725, 719, 675, 707, 749, 745};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
 const int maxSpeedL = 90;
@@ -40,6 +43,8 @@ void setup() {
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
   qtr.setEmitterPin(12);
 
+  //qtr.setCalibration(sensorMin, sensorMax);
+
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH); // calibration mode
@@ -51,6 +56,11 @@ void setup() {
     delay(5);
   }
   digitalWrite(LED_BUILTIN, LOW); // done calibrating
+
+  // for (uint8_t i = 0; i < SensorCount; i++){
+  //   qtr.calibrationOn.minimum[i] = sensorMin[i];
+  //   qtr.calibrationOn.maximum[i] = sensorMax[i];
+  // }
 
   Serial.println("Calibration done.");
   delay(500);
@@ -96,17 +106,21 @@ void stopMotors(int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR){
 
 
 void aimMotors(bool turnType){
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+  moveMotors(baseSpeedL, baseSpeedR);
+  delay(250);
+  moveMotors(0,0);
 
-  moveMotorsAlt(255, 255);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+
+  moveMotorsAlt(baseSpeedL*2, baseSpeedR*2);
   if (turnType == 1){
-    delay(450);
+    delay(600);
   }
   else{
-    delay(1150);
+    delay(700);
   }
 
 
@@ -117,6 +131,8 @@ void aimMotors(bool turnType){
 
   moveMotorsAlt(baseSpeedL, baseSpeedR);
 
+  delay(250);
+
 
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
@@ -124,12 +140,35 @@ void aimMotors(bool turnType){
   digitalWrite(IN4, LOW);
 
   moveMotorsAlt(0, 0);
+  delay(300);
+
+
+  
+  //moveMotors(baseSpeedL, baseSpeedR);
+  //delay(250);
+  moveMotors(0,0);
 }
 
-bool tarCzech(){
+bool crossCzech(){
   int count = 0;
   for (int i = 1; i < 7; i++){
-    if((sensorValues[i] > 950) || (sensorValues[i] < 50)){
+    if(sensorValues[i] > 950){
+      count++;
+      if(count == 6){
+        cn++;
+        count = 0;
+        return 1;
+      }
+    }
+  }
+  
+  return 0;
+}
+
+bool puckCzech(){
+  int count = 0;
+  for (int i = 0; i < 8; i++){
+    if( (sensorValues[i] < 50)){
       count++;
       if(count == 6){
         cn++;
@@ -146,34 +185,57 @@ void pidGo(int cnGoal) {
   while(cn < cnGoal){
     // Read QTR sensor position (0 = far left, 5000 = far right)
     input = qtr.readLineBlack(sensorValues);
+    //qtr.readCalibrated(sensorValues);
 
     // Run PID
     pid.Compute();
 
-    // Apply PID correction
-    int leftSpeed  = baseSpeedL + output;
-    int rightSpeed = baseSpeedR - output;
-
-    // Constrain speeds
-    leftSpeed = constrain(leftSpeed, 0, maxSpeedL);
-    rightSpeed = constrain(rightSpeed, 0, maxSpeedR);
-
-    moveMotors(leftSpeed, rightSpeed); // swapped order (your setup)
-
-    // Debugging output
-    Serial.print("POS: "); Serial.print(input);
-    Serial.print(" | OUT: "); Serial.print(output);
-    Serial.print(" | L: "); Serial.print(leftSpeed);
-    Serial.print(" | R: "); Serial.println(rightSpeed);
-
     //delay(10);
-    bool x = tarCzech();
-    if (x==1){
-      moveMotors(baseSpeedL, baseSpeedR);
-      delay(500);
-      stopMotors();
-      delay(2500);
+    bool x;
+    if (cn == 0){
+      x = puckCzech();
     }
+    else{
+      x = crossCzech();
+    }
+    if (x==1){
+      if(cn == 1){
+        moveMotors(0, baseSpeedR);
+        delay(2000);
+        }
+      else{
+        moveMotors(baseSpeedL, baseSpeedR);
+        delay(500);
+        stopMotors();
+        delay(2500);
+        moveMotors(baseSpeedL, baseSpeedR);
+        delay(250);
+        stopMotors();
+      }
+      
+    }
+    else{
+    
+    
+
+      // Apply PID correction
+      int leftSpeed  = baseSpeedL + output;
+      int rightSpeed = baseSpeedR - output;
+
+      // Constrain speeds
+      leftSpeed = constrain(leftSpeed, 0, maxSpeedL);
+      rightSpeed = constrain(rightSpeed, 0, maxSpeedR);
+
+      moveMotors(leftSpeed, rightSpeed); // swapped order (your setup)
+
+      // Debugging output
+      Serial.print("POS: "); Serial.print(input);
+      Serial.print(" | OUT: "); Serial.print(output);
+      Serial.print(" | L: "); Serial.print(leftSpeed);
+      Serial.print(" | R: "); Serial.println(rightSpeed);
+    }
+
+    
   }
   stopMotors();
 

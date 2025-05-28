@@ -41,6 +41,8 @@ void setup() {
   digitalWrite(IN3, HIGH);
   digitalWrite(IN4, LOW);
 
+  
+
   // configure the sensors
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
@@ -50,6 +52,7 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, HIGH); // calibration mode
 
+  delay(2500);
   // Calibration
   for (uint16_t i = 0; i < 200; i++) {
     qtr.calibrate();
@@ -84,19 +87,30 @@ void moveMotorsBack(int speedL, int speedR){
 }
 
 void fire(int cnGoal){
-  while (cn < cnGoal){
-    moveMotorsBack(0, 0);
-    bool x = tarCzech();
-    if (x==1){
-      delay(3000);
-    }
+  if (cn > cnGoal){
+    delay(3000);
+    moveMotorsBack(255, 0);
+    delay(3000);
+    moveMotorsBack(255, 255);
+    delay(50000);
   }
-  moveMotorsBack(255, 0);
-  delay(3000);
-  moveMotorsBack(255, 255);
+  // while (cn < cnGoal){
+  //   moveMotorsBack(0, 0);
+  //   bool x = tarCzech();
+  //   if (x==1){
+  //     delay(3000);
+  //   }
+  // }
+  // moveMotorsBack(255, 0);
+  // delay(3000);
+  // moveMotorsBack(255, 255);
+  bool x = tarCzech();
+  if (x==1){
+  delay(4000);
+  }
 }
+
 
 void loop() {
   fire(2);
-  delay(300000);
 }
