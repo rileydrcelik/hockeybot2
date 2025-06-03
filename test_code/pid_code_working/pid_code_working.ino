@@ -15,19 +15,19 @@ QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
-const int maxSpeedL = 90;
-const int maxSpeedR = 90;
-const int baseSpeedL = 45;
-const int baseSpeedR = 45;
+const int maxSpeedL = 70;
+const int maxSpeedR = 70;
+const int baseSpeedL = 35;
+const int baseSpeedR = 35;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.000075, Ki = 0.0, Kd = .006;  // Tune these!
+double Kp = 0.01, Ki = 0.0, Kd = .0035;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
   Serial.begin(9600);
-
+  delay(2500);
   // Set up motor pins
   pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
   pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
@@ -90,6 +90,4 @@ void loop() {
   Serial.print(" | OUT: "); Serial.print(output);
   Serial.print(" | L: "); Serial.print(leftSpeed);
   Serial.print(" | R: "); Serial.println(rightSpeed);
-
-  delay(10);
 }

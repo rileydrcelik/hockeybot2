@@ -21,14 +21,14 @@ uint16_t sensorMin[8] = {669, 590, 603, 594, 515, 545, 634, 658};
 uint16_t sensorMax[8] = {750, 722, 725, 719, 675, 707, 749, 745};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
-const int maxSpeedL = 90;
-const int maxSpeedR = 90;
-const int baseSpeedL = 45;
-const int baseSpeedR = 45; // increased baseSpeedL & R from 45 to 50
+const int maxSpeedL = 80;
+const int maxSpeedR = 80;
+const int baseSpeedL = 40;
+const int baseSpeedR = 40; // increased baseSpeedL & R from 45 to 50
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.0078, Ki = 0.0, Kd = .0035;  // Tune these!    //solid values:  Kp = 0.0078, Ki = 0.0, Kd = .0035
+double Kp = 0.0078, Ki = 0.0, Kd = .003;  // Tune these!    //solid values:  Kp = 0.0078, Ki = 0.0, Kd = .0035
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
@@ -66,87 +66,83 @@ void setup() {
   delay(500);
 
   // PID setup
-  setpoint = 3500; // center of 0-5000 for 6 sensors
+  setpoint = 3250; // center of 0-5000 for 6 sensors
   pid.SetMode(AUTOMATIC);
   pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
 }
 
-void moveMotors(int leftSpeed, int rightSpeed) {
-  // Forward direction for both motors
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
+void moveMotors(int direction, int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR) {
+  //0 = backwards, 1 = forwards, 2 = left, 3 = right
+  if (direction == 0){
+      digitalWrite(IN1, LOW);
+      digitalWrite(IN2, HIGH);
+      digitalWrite(IN3, LOW);
+      digitalWrite(IN4, HIGH);
+  }
+  else if (direction == 1){
+    // Forward direction for both motors
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+  }
+  else if (direction == 2){
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+  }
+  else if (direction == 3){
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+  }
+  
 
   analogWrite(ENA, constrain(abs(leftSpeed), 0, maxSpeedL));
   analogWrite(ENB, constrain(abs(rightSpeed), 0, maxSpeedR));
 }
 
-void moveMotorsAlt(int speedL, int speedR){
-  analogWrite(ENA, speedL);
-  analogWrite(ENB, speedR);
+void stopMotors(int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR){
+  moveMotors(0, leftSpeed, rightSpeed);
+  delay(50);
+  moveMotors(1, 0, 0);
 }
 
-void stopMotors(int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR){
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
-
-  moveMotorsAlt(leftSpeed, rightSpeed);
-  delay(50);
-
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-
-  moveMotorsAlt(0, 0);
+void turn(bool direction, int time){
+  //0 = left, 1 = right
+  if (direction == 0){
+    moveMotors(2, maxSpeedL, maxSpeedR);
+  }
+  else{
+    moveMotors(3, maxSpeedL, maxSpeedR);
+  }
+  delay(time);
+  stopMotors();
 }
 
 
 void aimMotors(bool turnType){
-  moveMotors(baseSpeedL, baseSpeedR);
-  delay(250);
-  moveMotors(0,0);
+  moveMotors(1, maxSpeedL, maxSpeedR);
+  delay(350);
+  stopMotors();
 
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
-
-  moveMotorsAlt(baseSpeedL*2, baseSpeedR*2);
   if (turnType == 1){
-    delay(600);
+    turn(0, 350);
   }
   else{
-    delay(700);
+    turn(0, 550);
   }
 
-
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-
-  moveMotorsAlt(baseSpeedL, baseSpeedR);
-
-  delay(250);
+  stopMotors();
+  delay(500);
 
 
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-
-  moveMotorsAlt(0, 0);
-  delay(300);
-
-
-  
-  //moveMotors(baseSpeedL, baseSpeedR);
-  //delay(250);
-  moveMotors(0,0);
+  moveMotors(1, baseSpeedL, baseSpeedR);
+  delay(500);
+  stopMotors();
+  delay(8000);
 }
 
 bool crossCzech(){
@@ -181,7 +177,10 @@ bool puckCzech(){
   return 0;
 }
 
-void pidGo(int cnGoal) {
+void pidGo(int cnGoal, bool puckNo) {
+//cnGoal is amount of pucks/crosses it will go over
+//puckNo is which puck were targetting
+  cn = 0;
   while(cn < cnGoal){
     // Read QTR sensor position (0 = far left, 5000 = far right)
     input = qtr.readLineBlack(sensorValues);
@@ -198,26 +197,26 @@ void pidGo(int cnGoal) {
     else{
       x = crossCzech();
     }
+    //if a puck/line is detected...
     if (x==1){
+      //cn == 1 means it passed the puck
       if(cn == 1){
-        moveMotors(0, baseSpeedR);
-        delay(2000);
+        if (puckNo == 1){
+          stopMotors();
         }
+        else{
+          //turn right when over the first puck
+          moveMotors(1, baseSpeedL/2, baseSpeedR);
+          delay(2500);
+        }
+        }
+      //else imples cn > 1 and its on the cross
       else{
-        moveMotors(baseSpeedL, baseSpeedR);
-        delay(500);
-        stopMotors();
-        delay(2500);
-        moveMotors(baseSpeedL, baseSpeedR);
-        delay(250);
         stopMotors();
       }
       
     }
     else{
-    
-    
-
       // Apply PID correction
       int leftSpeed  = baseSpeedL + output;
       int rightSpeed = baseSpeedR - output;
@@ -226,7 +225,7 @@ void pidGo(int cnGoal) {
       leftSpeed = constrain(leftSpeed, 0, maxSpeedL);
       rightSpeed = constrain(rightSpeed, 0, maxSpeedR);
 
-      moveMotors(leftSpeed, rightSpeed); // swapped order (your setup)
+      moveMotors(1, leftSpeed, rightSpeed); // swapped order (your setup)
 
       // Debugging output
       Serial.print("POS: "); Serial.print(input);
@@ -242,8 +241,46 @@ void pidGo(int cnGoal) {
 }
 
 void loop(){
-  pidGo(2);
+  //go forward when starting from middle
+  // moveMotors(1)
+  // delay(3000);
+  // turn(1, 250); //90 deg turn to face track
+  // autoCalibrate();
+
+  
+
+  pidGo(2, 0);
   aimMotors(0);
+  // pidGo(1, 1);
+  // aimMotors(1);
+
+  // //TESTING DIRECRIONS
+  // //forward
+  // moveMotors(1);
+  // delay(3000);
+  // stopMotors();
+  // delay(2500);
+  // //back
+  // moveMotors(0);
+  // delay(3000);
+  // stopMotors();
+  // delay(2500);
+  // //left turn
+  // turn(0, 2500);
+  // stopMotors();
+  // delay(2500);
+  // //right turn
+  // turn(1, 2500);
+  // stopMotors();
+  // delay(2500);
+  // //aim 1
+  // aimMotors(0);
+  // delay(2500);
+  // //aim 2
+  // aimMotors(1);
+  // delay(1000000);
+
+
   delay(5000000);
   
 }

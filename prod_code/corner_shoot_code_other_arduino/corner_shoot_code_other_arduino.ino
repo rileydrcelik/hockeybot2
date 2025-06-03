@@ -26,6 +26,7 @@ const int baseSpeedR = 60;
 */
 
 void setup() {
+  Serial.begin(9600);
   
   // Set up motor pins
   pinMode(ENA, OUTPUT);
@@ -60,15 +61,15 @@ void setup() {
   }
   digitalWrite(LED_BUILTIN, LOW); // done calibrating
 
-  delay(500);
+  delay(2500);
 
 
 }
 
-bool tarCzech(){
+bool puckCzech(){
   int count = 0;
   for (int i = 1; i < 7; i++){
-    if((sensorValues[i] > 950) || (sensorValues[i] < 50)){
+    if(sensorValues[i] < 50){
       count++;
       if(count == 6){
         cn++;
@@ -81,19 +82,44 @@ bool tarCzech(){
   return 0;
 }
 
-void moveMotorsBack(int speedL, int speedR){
+bool crossCzech(){
+  int count = 0;
+  for (int i = 1; i < 7; i++){
+    Serial.println(sensorValues[i]);
+    if(sensorValues[i] > 950){
+      count++;
+      //Serial.println(count);
+      if(count == 6){
+        cn++;
+        count = 0;
+        return 1;
+      }
+    }
+  }
+  
+  return 0;
+}
+
+void moveMotors(int speedL, int speedR){
   analogWrite(ENA, speedL);
   analogWrite(ENB, speedR);
 }
 
 void fire(int cnGoal){
-  if (cn > cnGoal){
-    delay(3000);
-    moveMotorsBack(255, 0);
-    delay(3000);
-    moveMotorsBack(255, 255);
-    delay(50000);
+  cn = 0;
+  while (cn < cnGoal){
+    bool x = crossCzech();
+    //Serial.println(x);
+    if (x==1){
+      delay(2500);
+    }
+    Serial.println(cn);
   }
+  moveMotors(255, 0);
+  delay(3000);
+  moveMotors(255, 255);
+  delay(5000);
+  moveMotors(0, 0);
   // while (cn < cnGoal){
   //   moveMotorsBack(0, 0);
   //   bool x = tarCzech();
@@ -104,13 +130,26 @@ void fire(int cnGoal){
   // moveMotorsBack(255, 0);
   // delay(3000);
   // moveMotorsBack(255, 255);
-  bool x = tarCzech();
-  if (x==1){
-  delay(4000);
-  }
+  //bool x;
+  // if (cn == 0) {
+  //   x = puckCzech();
+  //   if (x==1){
+  //     delay(5000);
+  //   }
+  // }
+  // x = crossCzech();
+  // //Serial.println(x);
+  // if (x==1){
+  //   delay(2500);
+  // }
+  // Serial.println(cn);
+
 }
 
 
 void loop() {
-  fire(2);
+  //moveMotors(255, 255);
+  fire(1);
+  delay(250000);
+  // fire(1);
 }
