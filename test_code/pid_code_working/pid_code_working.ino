@@ -15,14 +15,15 @@ QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
-const int maxSpeedL = 70;
-const int maxSpeedR = 70;
-const int baseSpeedL = 35;
-const int baseSpeedR = 35;
+
+const int baseSpeedL = 22;
+const int baseSpeedR = 22;
+const int maxSpeedL = 2*baseSpeedL;
+const int maxSpeedR = 2*baseSpeedR;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.01, Ki = 0.0, Kd = .0035;  // Tune these!
+double Kp = 0.003, Ki = 0.0, Kd = .0033;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {

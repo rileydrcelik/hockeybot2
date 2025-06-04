@@ -1,3 +1,5 @@
+//THIS IS TRASMITTER (TX) ARDUINO
+
 #include <QTRSensors.h>
 #include <PID_v1.h>
 
@@ -17,9 +19,6 @@ int cn = 0;
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
-
-uint16_t sensorMin[8] = {669, 590, 603, 594, 515, 545, 634, 658};
-uint16_t sensorMax[8] = {750, 722, 725, 719, 675, 707, 749, 745};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
 const int baseSpeedL = 22;
@@ -45,7 +44,6 @@ void setup() {
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
   qtr.setEmitterPin(12);
 
-  //qtr.setCalibration(sensorMin, sensorMax);
 
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
@@ -59,12 +57,7 @@ void setup() {
   }
   digitalWrite(LED_BUILTIN, LOW); // done calibrating
 
-  // for (uint8_t i = 0; i < SensorCount; i++){
-  //   qtr.calibrationOn.minimum[i] = sensorMin[i];
-  //   qtr.calibrationOn.maximum[i] = sensorMax[i];
-  // }
-
-  Serial.println("Calibration done.");
+  //Serial.println("Calibration done.");
   delay(500);
 
   // PID setup
@@ -83,7 +76,6 @@ void moveMotors(int direction, int leftSpeed = baseSpeedL, int rightSpeed = base
       
   }
   else if (direction == 1){
-    // Forward direction for both motors
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, HIGH);
@@ -141,45 +133,39 @@ void aimMotors(bool turnType){
 
   stopMotors();
   delay(500);
-
-
   moveMotors(1, maxSpeedL, maxSpeedR);
   delay(250);
   stopMotors();
   delay(8000);
 }
 
-bool crossCzech(){
-  int count = 0;
+bool tarCzech(int mode){
+  //0 for puck, 1 for cross
   for (int i = 1; i < 7; i++){
-    if(sensorValues[i] > 950){
-      count++;
-      if(count == 6){
-        cn++;
-        count = 0;
-        return 1;
+    if (mode == 0){
+      if(sensorValues[i] < 50){
+        count++;
+        if(count == 6){
+          cn++;
+          count = 0;
+          return 1;
+        }
+      }
+    }
+    else{
+      if(sensorValues[i] > 950){
+        count++;
+        if(count == 6){
+          cn++;
+          count = 0;
+          return 1;
+        }
       }
     }
   }
-  
   return 0;
 }
 
-bool puckCzech(){
-  int count = 0;
-  for (int i = 0; i < 8; i++){
-    if( (sensorValues[i] < 50)){
-      count++;
-      if(count == 6){
-        cn++;
-        count = 0;
-        return 1;
-      }
-    }
-  }
-  
-  return 0;
-}
 
 void pidGo(int cnGoal, bool puckNo) {
 //cnGoal is amount of pucks/crosses it will go over
@@ -194,32 +180,16 @@ void pidGo(int cnGoal, bool puckNo) {
     pid.Compute();
 
     //delay(10);
-    bool x;
-    if (cn == 0){
-      x = puckCzech();
+    bool x = tarCzech((cnGoal-cn) == 1);
+    //if x = 1, cnGoal - 1 means if its meant to stop
+    if ((x == 1) && cnGoal-1 == 1){
+      stopMotors();
     }
-    else{
-      x = crossCzech();
+    //if x = 1, there is puck and it needs to turn
+    else if (x == 1) && ((cnGoal-cn) == 2){
+      moveMotors(1, baseSpeedL/2, baseSpeedR);
     }
-    //if a puck/line is detected...
-    if (x==1){
-      //cn == 1 means it passed the puck
-      if(cn == 1){
-        if (puckNo == 1){
-          stopMotors();
-        }
-        else{
-          //turn right when over the first puck
-          moveMotors(1, baseSpeedL/2, baseSpeedR);
-          delay(500);
-        }
-        }
-      //else imples cn > 1 and its on the cross
-      else{
-        stopMotors();
-      }
-      
-    }
+    //otherwise keep going
     else{
       // Apply PID correction
       int leftSpeed  = baseSpeedL + output;
@@ -230,12 +200,6 @@ void pidGo(int cnGoal, bool puckNo) {
       rightSpeed = constrain(rightSpeed, 0, maxSpeedR);
 
       moveMotors(1, leftSpeed, rightSpeed); // swapped order (your setup)
-
-      // Debugging output
-      Serial.print("POS: "); Serial.print(input);
-      Serial.print(" | OUT: "); Serial.print(output);
-      Serial.print(" | L: "); Serial.print(leftSpeed);
-      Serial.print(" | R: "); Serial.println(rightSpeed);
     }
 
     
@@ -251,10 +215,9 @@ void loop(){
   // turn(1, 250); //90 deg turn to face track
   // autoCalibrate();
 
-  
-
   pidGo(2, 0);
   aimMotors(0);
+  Serial.println("FIRE");
 
   turn(1, 400);
   stopMotors();
@@ -262,8 +225,7 @@ void loop(){
 
   pidGo(1, 1);
   aimMotors(1);
-  // pidGo(1, 1);
-  // aimMotors(1);
+  Serial.println("FIRE");
 
   // //TESTING DIRECRIONS
   // //forward
@@ -290,8 +252,6 @@ void loop(){
   // //aim 2
   // aimMotors(1);
   // delay(1000000);
-
-
   delay(5000000);
   
 }
