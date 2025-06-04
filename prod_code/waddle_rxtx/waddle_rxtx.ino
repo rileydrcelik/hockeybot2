@@ -21,8 +21,8 @@ QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
-const int baseSpeedL = 22;
-const int baseSpeedR = 22;
+const int baseSpeedL = 25;
+const int baseSpeedR = 25;
 const int maxSpeedL = 2*baseSpeedL;
 const int maxSpeedR = 2*baseSpeedR;
 
@@ -61,7 +61,7 @@ void setup() {
   delay(500);
 
   // PID setup
-  setpoint = 3250; // center of 0-5000 for 6 sensors
+  setpoint = 3500; // center of 0-5000 for 6 sensors
   pid.SetMode(AUTOMATIC);
   pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
 }
@@ -125,7 +125,7 @@ void aimMotors(bool turnType){
   stopMotors();
 
   if (turnType == 1){
-    turn(0, 200);
+    turn(1, 200);
   }
   else{
     turn(0, 400);
@@ -137,13 +137,21 @@ void aimMotors(bool turnType){
   delay(250);
   stopMotors();
   delay(8000);
+  moveMotors(0, maxSpeedL, maxSpeedR);
+  delay(250);
+  stopMotors();
 }
 
 bool tarCzech(int mode){
+  Serial.print(cn);
+  Serial.print('\t');
+  int count = 0;
   //0 for puck, 1 for cross
-  for (int i = 1; i < 7; i++){
+  for (int i = 2; i < 8; i++){
     if (mode == 0){
-      if(sensorValues[i] < 50){
+      Serial.print(sensorValues[i]);
+      Serial.print('\t');
+      if(sensorValues[i] < 500){
         count++;
         if(count == 6){
           cn++;
@@ -153,6 +161,8 @@ bool tarCzech(int mode){
       }
     }
     else{
+      //Serial.print(sensorValues[i]);
+      //Serial.print('\t');
       if(sensorValues[i] > 950){
         count++;
         if(count == 6){
@@ -162,8 +172,11 @@ bool tarCzech(int mode){
         }
       }
     }
+    
   }
+  Serial.println();
   return 0;
+
 }
 
 
@@ -186,8 +199,11 @@ void pidGo(int cnGoal, bool puckNo) {
       stopMotors();
     }
     //if x = 1, there is puck and it needs to turn
-    else if (x == 1) && ((cnGoal-cn) == 2){
+    else if ((x == 1) && ((cnGoal-cn) == 2)){
+      stopMotors();
+      delay(5000);
       moveMotors(1, baseSpeedL/2, baseSpeedR);
+      delay(500);
     }
     //otherwise keep going
     else{
@@ -214,12 +230,11 @@ void loop(){
   // delay(3000);
   // turn(1, 250); //90 deg turn to face track
   // autoCalibrate();
-
   pidGo(2, 0);
   aimMotors(0);
   Serial.println("FIRE");
 
-  turn(1, 400);
+  turn(1, 300);
   stopMotors();
   delay(250);
 

@@ -168,7 +168,7 @@ bool crossCzech(){
 bool puckCzech(){
   int count = 0;
   for (int i = 0; i < 8; i++){
-    if( (sensorValues[i] < 50)){
+    if( (sensorValues[i] < 500)){
       count++;
       if(count == 6){
         cn++;
@@ -210,6 +210,8 @@ void pidGo(int cnGoal, bool puckNo) {
         }
         else{
           //turn right when over the first puck
+          stopMotors();
+          delay(5000);
           moveMotors(1, baseSpeedL/2, baseSpeedR);
           delay(500);
         }
@@ -255,6 +257,7 @@ void loop(){
 
   pidGo(2, 0);
   aimMotors(0);
+  Serial.println(1);
 
   turn(1, 400);
   stopMotors();
@@ -262,6 +265,7 @@ void loop(){
 
   pidGo(1, 1);
   aimMotors(1);
+  Serial.println(1);
   // pidGo(1, 1);
   // aimMotors(1);
 
