@@ -142,10 +142,10 @@ void aimMotors(bool turnType){
   stopMotors();
 
   if (turnType == 1){
-    turn(0, 200);
+    turn(1, 1);
   }
   else{
-    turn(0, 300);
+    turn(0, 360);
   }
 
   stopMotors();
@@ -159,6 +159,7 @@ void aimMotors(bool turnType){
 }
 
 bool crossCzech(){
+  qtr.readCalibrated(sensorValues);
   int count = 0;
   for (int i = 0; i < 8; i++){
     if(sensorValues[i] > 950){
@@ -173,17 +174,17 @@ bool crossCzech(){
 }
 
 bool puckCzech(){
+  qtr.readCalibrated(sensorValues);
   int count = 0;
   for (int i = 0; i < 8; i++){
-    if( (sensorValues[i] > 950)){
+    if( (sensorValues[i] < 50)){
       count++;
-      if(count == 8){
+      if(count == 2){
         count = 0;
         return 1;
       }
     }
   }
-  
   return 0;
 }
 
@@ -210,23 +211,23 @@ void pidGo(int mode) {
 
   while (looper < 1){
     if (mode == 0){
-        if (puckCzech() == 1){
-          return;
-        }
-        else{
-          pidRun();
-        }
+      if (puckCzech() == 1){
+        return;
       }
+      else{
+        pidRun();
+      }
+    }
 
-      else if (mode == 1){
-        if (crossCzech() == 1){
-          stopMotors();
-          return;
-        }
-        else{
-          pidRun();
-        }
+    else if (mode == 1){
+      if (crossCzech() == 1){
+        stopMotors();
+        return;
       }
+      else{
+        pidRun();
+      }
+    }
   }
 
   
@@ -235,15 +236,33 @@ void pidGo(int mode) {
 }
 
 void loop(){
+  //pid until it seees puck
   pidGo(0);
+  moveMotors(1);
+  delay(400);
+  //once it sees the puck it turns right
+  moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
+  delay(1000);
+
+  //pid until it sees the cross
+  pidGo(1);
+  //aim then fire
+  aimMotors(0);
+  Serial.println(1);
+
+  //back up, turn to face line, then pid until other puck
   delay(5000);
   moveMotors(0);
-  delay(500000);
-
+  delay(250);
+  turn(1, 340);
   pidGo(0);
-  pidGo(1);
+  moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
+  delay(500);
+  //aim then fire
+  moveMotors(1);
+  delay(500);
+  aimMotors(1);
   Serial.println(1);
-  aimMotors(0);
 
   // turn(1, 400);
   // stopMotors();
