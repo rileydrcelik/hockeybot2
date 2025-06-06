@@ -4,7 +4,6 @@
 // Motor driver pins
 #define ENA 9  // Right motor speed (PWM)
 #define IN1 3  // Right motor dir 1
-
 #define IN2 4  // Right motor dir 2
 #define ENB 10  // Left motor speed (PWM)
 #define IN3 6  // Left motor dir 1
@@ -16,8 +15,6 @@ const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
 
-uint16_t sensorMin[8] = {669, 590, 603, 594, 515, 545, 634, 658};
-uint16_t sensorMax[8] = {750, 722, 725, 719, 675, 707, 749, 745};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
 const int baseSpeedL = 25;
@@ -28,7 +25,7 @@ const int maxSpeedR = 2*baseSpeedR;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.002, Ki = 0.0, Kd = .003;  // Tune these!    //solid values:  Kp = 0.0078, Ki = 0.0, Kd = .0035
+double Kp = 0.002, Ki = 0.0, Kd = .003;  // Tune these!    //solid values:  Kp = 0.0078, Ki = 0.0, Kd = .0035  old kp value 0.002
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
@@ -100,16 +97,16 @@ void moveMotors(int direction, int leftSpeed = baseSpeedL, int rightSpeed = base
     
   }
   else if (direction == 2){
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
-  }
-  else if (direction == 3){
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
+  }
+  else if (direction == 3){
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
   }
   
 
@@ -142,10 +139,10 @@ void aimMotors(bool turnType){
   stopMotors();
 
   if (turnType == 1){
-    turn(1, 1);
+    turn(1, 200);
   }
   else{
-    turn(0, 360);
+    turn(0, 500);
   }
 
   stopMotors();
@@ -155,7 +152,8 @@ void aimMotors(bool turnType){
   moveMotors(1, maxSpeedL, maxSpeedR);
   delay(250);
   stopMotors();
-  delay(8000);
+  //delay(8000); use this when actually doit
+  delay(1000);
 }
 
 bool crossCzech(){
@@ -238,11 +236,9 @@ void pidGo(int mode) {
 void loop(){
   //pid until it seees puck
   pidGo(0);
-  moveMotors(1);
-  delay(400);
   //once it sees the puck it turns right
-  moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
-  delay(1000);
+  moveMotors(1, baseSpeedL/2, baseSpeedR*2);
+  delay(850);
 
   //pid until it sees the cross
   pidGo(1);
@@ -254,13 +250,13 @@ void loop(){
   delay(5000);
   moveMotors(0);
   delay(250);
-  turn(1, 340);
+  turn(1, 580);
   pidGo(0);
   moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
   delay(500);
   //aim then fire
   moveMotors(1);
-  delay(500);
+  delay(125);
   aimMotors(1);
   Serial.println(1);
 
