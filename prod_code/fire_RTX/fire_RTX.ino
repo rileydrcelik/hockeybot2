@@ -38,7 +38,7 @@ void moveMotors(int speedL, int speedR){
 
 void fire(){
   moveMotors(255, 0);
-  delay(3000);
+  delay(5000);
   moveMotors(255, 255);
   delay(5000);
   moveMotors(0, 0);
@@ -54,5 +54,7 @@ void loop() {
     }
   }
   delay(10);
+  // fire();
+  // delay(999999);
 }
 

@@ -48,7 +48,7 @@ void setup() {
 
   delay(2500);
   // Calibration
-  for (uint16_t i = 0; i < 400; i++) {
+  for (uint16_t i = 0; i < 200; i++) {
     qtr.calibrate();
     // delay(5);
   }
@@ -71,7 +71,7 @@ void setup() {
   analogWrite(ENA, 0);
   analogWrite(ENB, 0);
 
-  delay(3000);
+  delay(5000);
 
   // PID setup
   setpoint = 3500; // center of 0-5000 for 6 sensors
@@ -82,31 +82,31 @@ void setup() {
 void moveMotors(int direction, int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR) {
   //0 = backwards, 1 = forwards, 2 = left, 3 = right
   if (direction == 0){
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
       
   }
   else if (direction == 1){
     // Forward direction for both motors
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
     
   }
   else if (direction == 2){
+    digitalWrite(IN1, LOW);
+    digitalWrite(IN2, HIGH);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, LOW);
+  }
+  else if (direction == 3){
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-  }
-  else if (direction == 3){
-    digitalWrite(IN1, LOW);
-    digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
   }
   
 
@@ -134,23 +134,30 @@ void turn(bool direction, int time){
 
 
 void aimMotors(bool turnType){
-  moveMotors(1, maxSpeedL, maxSpeedR);
-  delay(350);
+  
   stopMotors();
 
   if (turnType == 1){
-    turn(1, 200);
+    turn(1, 180);
+    stopMotors();
+    delay(500);
+    moveMotors(1, maxSpeedL, maxSpeedR);
+    delay(250);
   }
   else{
-    turn(0, 500);
+    moveMotors(1, maxSpeedL, maxSpeedR);
+    delay(350);
+    turn(0, 375);
+    stopMotors();
+    delay(500);
+    moveMotors(1, maxSpeedL, maxSpeedR);
+    delay(100);
   }
 
-  stopMotors();
-  delay(500);
+  
 
 
-  moveMotors(1, maxSpeedL, maxSpeedR);
-  delay(250);
+  
   stopMotors();
   //delay(8000); use this when actually doit
   delay(1000);
@@ -234,23 +241,51 @@ void pidGo(int mode) {
 }
 
 void loop(){
+  //-------------BLACK PUCK--------------//
+  moveMotors(1);
+  delay(2000);
+  stopMotors();
+  delay(500);
+  //turn right 90 deg then fire
+  turn(1, 475);
+  delay(1000);
+  //go forward to 'eat puck' fully
+  moveMotors(1);
+  delay(1000);
+  stopMotors();
+  delay(250);
+  //fire
+  Serial.println(1);
+  delay(8000);
+  //go back to line
+  moveMotors(0);
+  delay(500);
+  turn(1, 450);
+  moveMotors(1);
+  delay(2750);
+  turn(1, 300);
+  delay(5000);
+
+  //---------------PUCK ONE---------------//
+
   //pid until it seees puck
   pidGo(0);
   //once it sees the puck it turns right
   moveMotors(1, baseSpeedL/2, baseSpeedR*2);
-  delay(850);
-
+  delay(550);
   //pid until it sees the cross
   pidGo(1);
   //aim then fire
   aimMotors(0);
   Serial.println(1);
+  delay(8000);
 
+
+  //---------------------PUCK TWO---------------//
   //back up, turn to face line, then pid until other puck
-  delay(5000);
   moveMotors(0);
   delay(250);
-  turn(1, 580);
+  turn(1, 450);
   pidGo(0);
   moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
   delay(500);
@@ -260,13 +295,7 @@ void loop(){
   aimMotors(1);
   Serial.println(1);
 
-  // turn(1, 400);
-  // stopMotors();
-  // delay(250);
 
-  // pidGo(1, 1);
-  // Serial.println(1);
-  // aimMotors(1);
 
   delay(5000000);
 }
