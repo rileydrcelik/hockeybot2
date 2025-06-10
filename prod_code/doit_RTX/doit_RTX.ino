@@ -17,6 +17,8 @@ uint16_t sensorValues[SensorCount];
 uint16_t sensorMin[8] = {667, 608, 484, 427, 502, 507, 499, 629};
 uint16_t sensorMax[8] = {812, 756, 703, 643, 710, 757, 760, 798};
 
+const int debug = 2500;
+
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
 const int baseSpeedL = 25;
@@ -223,31 +225,44 @@ void blackPuck(){
   moveMotors(1);
   delay(1500);
   stopMotors();
-  delay(350);
+  delay(debug);
+
   //turn right 90 deg then fire
   turn(1, 365);
-  delay(1000);
+  delay(debug);
+
   //go forward to 'eat puck' fully
   moveMotors(1);
   delay(500);
   stopMotors();
-  delay(260);
+  delay(debug);
+
   //fire
   Serial.println(1);
-  delay(7500);
+  delay(3000);
   moveMotors(1, 15, 15);
-  delay(5000);
-  //go back to line
+  delay(3000);
+
   stopMotors();
+  delay(debug);
+
+  //go back to line
   moveMotors(0);
   delay(800);
+  stopMotors();
+  delay(debug);
+
   turn(1, 330);
+  delay(debug);
+
   moveMotors(1);
   delay(2100);
-  stopMotors(250);
+  stopMotors();
+  delay(debug);
+
   turn(1, 280);
   stopMotors();
-  delay(1000);
+  delay(debug);
 }
 
 void yellowPuck(){
@@ -262,29 +277,48 @@ void yellowPuck(){
   pidGo(1);
   //aim then fire
   aimMotors(0);
+
+  //break here for debug
+  stopMotors();
+  delay(debug);
+
   Serial.println(1);
-  delay(7500);
+  delay(3000);
   moveMotors(1, 15, 15);
-  delay(5000);
+  delay(3000);
+
+  stopMotors();
+  delay(debug);
+
+  //back up and return to line
+  moveMotors(0);
+  delay(500);
+  turn(1, 420);
 }
 
 void greenPuck(){
-    //---------------------PUCK TWO---------------//
-  //back up, turn to face line, then pid until other puck
-  moveMotors(0);
-  delay(400);
-  turn(1, 420);
+  //---------------------PUCK TWO---------------//
+  //go after green
   pidGo(0);
   moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
   delay(500);
+
   //aim then fire
   moveMotors(1);
   delay(125);
+  stopMotors();
+  delay(debug);
+
   aimMotors(1);
+  delay(debug);
+
   Serial.println(1);
-  delay(7500);
+  delay(3000);
   moveMotors(1, 15, 15);
-  delay(5000);
+  delay(3000);
+
+  stopMotors();
+  delay(debug);
 }
 
 void loop(){

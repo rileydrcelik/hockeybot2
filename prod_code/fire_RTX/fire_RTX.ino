@@ -38,9 +38,9 @@ void moveMotors(int speedL, int speedR){
 
 void fire(){
   moveMotors(255, 0);
-  delay(7500);
+  delay(3000);
   moveMotors(255, 255);
-  delay(4000);
+  delay(3000);
   moveMotors(0, 0);
 }
 
