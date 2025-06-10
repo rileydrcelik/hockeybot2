@@ -14,6 +14,8 @@
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
+uint16_t sensorMin[8] = {667, 608, 484, 427, 502, 507, 499, 629};
+uint16_t sensorMax[8] = {812, 756, 703, 643, 710, 757, 760, 798};
 
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
@@ -39,23 +41,6 @@ void setup() {
   qtr.setTypeAnalog();
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
   qtr.setEmitterPin(12);
-
-  //qtr.setCalibration(sensorMin, sensorMax);
-
-  delay(500);
-  pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); // calibration mode
-
-  delay(2500);
-  // Calibration
-  for (uint16_t i = 0; i < 200; i++) {
-    qtr.calibrate();
-    // delay(5);
-  }
-  digitalWrite(LED_BUILTIN, LOW); // done calibrating
-
-  Serial.println("Calibration done.");
-
   //move wheel to show its done
 
   digitalWrite(IN1, LOW);
@@ -66,12 +51,8 @@ void setup() {
   analogWrite(ENA, 30);
   analogWrite(ENB, 30);
 
-  delay(1000);
-
   analogWrite(ENA, 0);
   analogWrite(ENB, 0);
-
-  delay(5000);
 
   // PID setup
   setpoint = 3500; // center of 0-5000 for 6 sensors
@@ -94,12 +75,11 @@ void moveMotors(int direction, int leftSpeed = baseSpeedL, int rightSpeed = base
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-    
   }
   else if (direction == 2){
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
-    digitalWrite(IN3, LOW);
+    digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
   }
   else if (direction == 3){
@@ -108,8 +88,6 @@ void moveMotors(int direction, int leftSpeed = baseSpeedL, int rightSpeed = base
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
   }
-  
-
   analogWrite(ENA, constrain(abs(leftSpeed), 0, maxSpeedL));
   analogWrite(ENB, constrain(abs(rightSpeed), 0, maxSpeedR));
 }
@@ -133,12 +111,10 @@ void turn(bool direction, int time){
 }
 
 
-void aimMotors(bool turnType){
-  
+void aimMotors(bool turnType){ 
   stopMotors();
-
   if (turnType == 1){
-    turn(1, 180);
+    turn(1, 100);
     stopMotors();
     delay(500);
     moveMotors(1, maxSpeedL, maxSpeedR);
@@ -147,24 +123,20 @@ void aimMotors(bool turnType){
   else{
     moveMotors(1, maxSpeedL, maxSpeedR);
     delay(350);
-    turn(0, 375);
+    stopMotors();
+    delay(250);
+    turn(0, 405);
     stopMotors();
     delay(500);
     moveMotors(1, maxSpeedL, maxSpeedR);
     delay(100);
   }
-
-  
-
-
-  
   stopMotors();
   //delay(8000); use this when actually doit
   delay(1000);
 }
 
-bool crossCzech(){
-  qtr.readCalibrated(sensorValues);
+bool crossCzech(uint16_t* sensorValues){
   int count = 0;
   for (int i = 0; i < 8; i++){
     if(sensorValues[i] > 950){
@@ -178,8 +150,7 @@ bool crossCzech(){
   return 0;
 }
 
-bool puckCzech(){
-  qtr.readCalibrated(sensorValues);
+bool puckCzech(uint16_t* sensorValues){
   int count = 0;
   for (int i = 0; i < 8; i++){
     if( (sensorValues[i] < 50)){
@@ -193,7 +164,7 @@ bool puckCzech(){
   return 0;
 }
 
-void pidRun(){
+void pidRun(uint16_t* sensorValues){
 // Read QTR sensor position (0 = far left, 5000 = far right)
   input = qtr.readLineBlack(sensorValues);
   //qtr.readCalibrated(sensorValues);
@@ -212,25 +183,32 @@ void pidRun(){
 
 void pidGo(int mode) {
 //0 is for puck, 1 is for cross
-  int looper = 0;
-
-  while (looper < 1){
+  while (true){
+    qtr.read(sensorValues);
+    for (uint8_t i = 0; i < SensorCount; i++) {
+      sensorValues[i] = constrain(sensorValues[i], sensorMin[i], sensorMax[i]);
+      if (sensorMax[i] > sensorMin[i]) {
+        sensorValues[i] = map(sensorValues[i], sensorMin[i], sensorMax[i], 0, 1000);
+      } else {
+        sensorValues[i] = 0; // Prevent divide by zero
+      }
+    }
     if (mode == 0){
-      if (puckCzech() == 1){
+      if (puckCzech(sensorValues) == 1){
         return;
       }
       else{
-        pidRun();
+        pidRun(sensorValues);
       }
     }
 
     else if (mode == 1){
-      if (crossCzech() == 1){
+      if (crossCzech(sensorValues) == 1){
         stopMotors();
         return;
       }
       else{
-        pidRun();
+        pidRun(sensorValues);
       }
     }
   }
@@ -240,33 +218,40 @@ void pidGo(int mode) {
 
 }
 
-void loop(){
+void blackPuck(){
   //-------------BLACK PUCK--------------//
   moveMotors(1);
-  delay(2000);
+  delay(1500);
   stopMotors();
-  delay(500);
+  delay(350);
   //turn right 90 deg then fire
-  turn(1, 475);
+  turn(1, 365);
   delay(1000);
   //go forward to 'eat puck' fully
   moveMotors(1);
-  delay(1000);
+  delay(500);
   stopMotors();
-  delay(250);
+  delay(260);
   //fire
   Serial.println(1);
-  delay(8000);
-  //go back to line
-  moveMotors(0);
-  delay(500);
-  turn(1, 450);
-  moveMotors(1);
-  delay(2750);
-  turn(1, 300);
+  delay(7500);
+  moveMotors(1, 15, 15);
   delay(5000);
+  //go back to line
+  stopMotors();
+  moveMotors(0);
+  delay(800);
+  turn(1, 330);
+  moveMotors(1);
+  delay(2100);
+  stopMotors(250);
+  turn(1, 280);
+  stopMotors();
+  delay(1000);
+}
 
-  //---------------PUCK ONE---------------//
+void yellowPuck(){
+    //---------------PUCK ONE---------------//
 
   //pid until it seees puck
   pidGo(0);
@@ -278,14 +263,17 @@ void loop(){
   //aim then fire
   aimMotors(0);
   Serial.println(1);
-  delay(8000);
+  delay(7500);
+  moveMotors(1, 15, 15);
+  delay(5000);
+}
 
-
-  //---------------------PUCK TWO---------------//
+void greenPuck(){
+    //---------------------PUCK TWO---------------//
   //back up, turn to face line, then pid until other puck
   moveMotors(0);
-  delay(250);
-  turn(1, 450);
+  delay(400);
+  turn(1, 420);
   pidGo(0);
   moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
   delay(500);
@@ -294,8 +282,14 @@ void loop(){
   delay(125);
   aimMotors(1);
   Serial.println(1);
+  delay(7500);
+  moveMotors(1, 15, 15);
+  delay(5000);
+}
 
-
-
+void loop(){
+  blackPuck();
+  yellowPuck();
+  greenPuck();
   delay(5000000);
 }

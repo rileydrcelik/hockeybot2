@@ -11,7 +11,6 @@
 #define IN4 7  // Left motor dir 2
 
 //defining eeprom addr
-const int EEPROM_ADDR = 0;
 
 // QTR sensor array
 const uint8_t SensorCount = 8;
@@ -32,32 +31,6 @@ double input, output, setpoint;
 double Kp = 0.002, Ki = 0.0, Kd = .003;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
-void saveCalibration(){
-  int addr = EEPROM_ADDR;
-  for (uint8_t i = 0; i < SensorCount; i++){
-    EEPROM.put(addr, qtr.calibrationOn.minimum[i]);
-    addr+= sizeof(uint16_t);
-  }
-  for (uint8_t i = 0; i < SensorCount; i++){
-    EEPROM.put(addr, qtr.calibrationOn.maximum[i]);
-    addr+= sizeof(uint16_t);
-  }
-  Serial.println("calibration saved!!");
-}
-
-void loadCalibration() {
-  int addr = EEPROM_ADDR;
-  for (uint8_t i = 0; i < SensorCount; i++) {
-    EEPROM.get(addr, qtr.calibrationOn.minimum[i]);
-    addr += sizeof(uint16_t);
-  }
-  for (uint8_t i = 0; i < SensorCount; i++) {
-    EEPROM.get(addr, qtr.calibrationOn.maximum[i]);
-    addr += sizeof(uint16_t);
-  }
-  Serial.println("Calibration loaded from EEPROM.");
-}
-
 void setup() {
   Serial.begin(9600);
   delay(2500);
@@ -72,21 +45,25 @@ void setup() {
 
   delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
-  digitalWrite(LED_BUILTIN, HIGH); // calibration mode
+  // digitalWrite(LED_BUILTIN, HIGH); // calibration mode
 
-  // Calibration... run ONCE
+  // // for (uint16_t i = 0; i < 200; i++) {
+  // //   qtr.calibrate();
+  // //   delay(5);
+  // // }
+  // digitalWrite(LED_BUILTIN, LOW); // done calibrating
+
   // for (uint16_t i = 0; i < 200; i++) {
-  //   qtr.calibrate();
+  //   qtr.read(sensorValues);
+
+  //   for (uint8_t j = 0; j < SensorCount; j++) {
+  //     if (sensorValues[j] < sensorMin[j]) sensorMin[j] = sensorValues[j];
+  //     if (sensorValues[j] > sensorMax[j]) sensorMax[j] = sensorValues[j];
+  //   }
+
   //   delay(5);
   // }
-  // digitalWrite(LED_BUILTIN, LOW); // done calibrating
-  // saveCalibration();
 
-  // for (uint8_t i = 0; i < SensorCount; i++) {
-  //   qtr.calibrationOn.minimum[i] = sensorMin[i];
-  //   qtr.calibrationOn.maximum[i] = sensorMax[i];
-  // }
-  loadCalibration();
 
   Serial.println("Calibration done.");
   delay(500);
@@ -96,10 +73,26 @@ void setup() {
   pid.SetMode(AUTOMATIC);
   pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
 
+  
+
   // for (uint8_t i = 0; i < SensorCount; i++) {
   //   Serial.print("Min["); Serial.print(i); Serial.print("] = "); Serial.print(qtr.calibrationOn.minimum[i]); Serial.print(" | ");
   //   Serial.print("Max["); Serial.print(i); Serial.print("] = "); Serial.println(qtr.calibrationOn.maximum[i]);
   // }
+
+  // Serial.print("uint16_t sensorMin[8] = {");
+  // for (uint8_t i = 0; i < SensorCount; i++) {
+  //   Serial.print(sensorMin[i]);
+  //   if (i < SensorCount - 1) Serial.print(", ");
+  // }
+  // Serial.println("};");
+
+  // Serial.print("uint16_t sensorMax[8] = {");
+  // for (uint8_t i = 0; i < SensorCount; i++) {
+  //   Serial.print(sensorMax[i]);
+  //   if (i < SensorCount - 1) Serial.print(", ");
+  // }
+  // Serial.println("};");
 
 }
 
@@ -116,7 +109,16 @@ void moveMotors(int leftSpeed, int rightSpeed) {
 
 void loop() {
   // Read QTR sensor position (0 = far left, 5000 = far right)
-  qtr.readCalibrated(sensorValues);
+  //qtr.readCalibrated(sensorValues);
+  qtr.read(sensorValues);
+  for (uint8_t i = 0; i < SensorCount; i++) {
+    sensorValues[i] = constrain(sensorValues[i], sensorMin[i], sensorMax[i]);
+    if (sensorMax[i] > sensorMin[i]) {
+      sensorValues[i] = map(sensorValues[i], sensorMin[i], sensorMax[i], 0, 1000);
+    } else {
+      sensorValues[i] = 0; // Prevent divide by zero
+    }
+  }
   input = qtr.readLineBlack(sensorValues);
 
   // Run PID
