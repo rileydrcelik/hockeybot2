@@ -7,14 +7,13 @@
 #define IN4 7   // Left motor dir 2
 
 //max speed
-const int baseSpeedL = 45;
-const int baseSpeedR = 45;
+// const int baseSpeedL = 14;
+// const int baseSpeedR = 17;
 
 
-/*base speed
-const int baseSpeedL = 30;
-const int baseSpeedR = 60;
-*/
+
+const int baseSpeedL = 20;
+const int baseSpeedR = 32;
 
 void setup() {
   // Set up motor pins

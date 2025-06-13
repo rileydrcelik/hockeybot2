@@ -24,8 +24,8 @@ void setup() {
   pinMode(IN4, OUTPUT);
 
   // Set direction forward for both motors
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
 
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
@@ -40,7 +40,7 @@ void fire(){
   moveMotors(255, 0);
   delay(3000);
   moveMotors(255, 255);
-  delay(3000);
+  delay(1000);
   moveMotors(0, 0);
 }
 

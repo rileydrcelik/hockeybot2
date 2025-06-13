@@ -16,24 +16,24 @@
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
-uint16_t sensorMin[8] = {667, 608, 484, 427, 502, 507, 499, 629};
-uint16_t sensorMax[8] = {812, 756, 703, 643, 710, 757, 760, 798};
+uint16_t sensorMin[8] = {769, 757, 664, 689, 697, 715, 776, 796};
+uint16_t sensorMax[8] = {872, 861, 789, 808, 813, 827, 866, 879};
+
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
 
-const int baseSpeedL = 25;
-const int baseSpeedR = 25;
+const int baseSpeedL = 30;
+const int baseSpeedR = 20;
 const int maxSpeedL = 2*baseSpeedL;
 const int maxSpeedR = 2*baseSpeedR;
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.002, Ki = 0.0, Kd = .003;  // Tune these!
+double Kp = 0.0025, Ki = 0.0, Kd = .00185;  // Tune these!
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
   Serial.begin(9600);
-  delay(2500);
   // Set up motor pins
   pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
   pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
@@ -43,7 +43,6 @@ void setup() {
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
   qtr.setEmitterPin(12);
 
-  delay(500);
   pinMode(LED_BUILTIN, OUTPUT);
   // digitalWrite(LED_BUILTIN, HIGH); // calibration mode
 
@@ -66,7 +65,7 @@ void setup() {
 
 
   Serial.println("Calibration done.");
-  delay(500);
+  
 
   // PID setup
   setpoint = 3500; // center of 0-5000 for 6 sensors

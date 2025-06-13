@@ -28,8 +28,12 @@
 
 QTRSensors qtr;
 
+
 const uint8_t SensorCount = 8;
 uint16_t sensorValues[SensorCount];
+uint16_t sensorMin[8] = {667, 608, 484, 427, 502, 507, 499, 629};
+uint16_t sensorMax[8] = {812, 756, 703, 643, 710, 757, 760, 798};
+
 
 void setup()
 {
@@ -46,37 +50,50 @@ void setup()
   // 0.1 ms per sensor * 4 samples per sensor read (default) * 6 sensors
   // * 10 reads per calibrate() call = ~24 ms per calibrate() call.
   // Call calibrate() 400 times to make calibration take about 10 seconds.
-  for (uint16_t i = 0; i < 400; i++)
-  {
-    qtr.calibrate();
+  // for (uint16_t i = 0; i < 200; i++)
+  // {
+  //   qtr.calibrate();
     
-  }
+  // }
   digitalWrite(LED_BUILTIN, LOW); // turn off Arduino's LED to indicate we are through with calibration
 
   // print the calibration minimum values measured when emitters were on
   Serial.begin(9600);
-  for (uint8_t i = 0; i < SensorCount; i++)
-  {
-    Serial.print(qtr.calibrationOn.minimum[i]);
-    Serial.print(' ');
-  }
-  Serial.println();
+  // for (uint8_t i = 0; i < SensorCount; i++)
+  // {
+  //   Serial.print(qtr.calibrationOn.minimum[i]);
+  //   Serial.print(' ');
+  // }
+  // Serial.println();
 
   // print the calibration maximum values measured when emitters were on
-  for (uint8_t i = 0; i < SensorCount; i++)
-  {
-    Serial.print(qtr.calibrationOn.maximum[i]);
-    Serial.print(' ');
-  }
-  Serial.println();
-  Serial.println();
-  delay(1000);
+  // for (uint8_t i = 0; i < SensorCount; i++)
+  // {
+  //   Serial.print(qtr.calibrationOn.maximum[i]);
+  //   Serial.print(' ');
+  // }
+  // Serial.println();
+  // Serial.println();
+  // delay(1000);
+  for (uint8_t i = 0; i < SensorCount; i++) {
+  qtr.calibrationOn.minimum[i] = sensorMin[i];
+  qtr.calibrationOn.maximum[i] = sensorMax[i];
+}
 }
 
 void loop()
 {
   // read calibrated sensor values and obtain a measure of the line position
   // from 0 to 5000 (for a white line, use readLineWhite() instead)
+  qtr.read(sensorValues);
+  for (uint8_t i = 0; i < SensorCount; i++) {
+    sensorValues[i] = constrain(sensorValues[i], sensorMin[i], sensorMax[i]);
+    if (sensorMax[i] > sensorMin[i]) {
+      sensorValues[i] = map(sensorValues[i], sensorMin[i], sensorMax[i], 0, 1000);
+    } else {
+      sensorValues[i] = 0; // Prevent divide by zero
+    }
+  }
   uint16_t position = qtr.readLineBlack(sensorValues);
 
   // print the sensor values as numbers from 0 to 1000, where 0 means maximum

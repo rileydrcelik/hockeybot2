@@ -21,15 +21,16 @@ const int debug = 2500;
 
 
 // Motor speed limits and base speeds (tuned for your mismatched motors)
-const int baseSpeedL = 25;
-const int baseSpeedR = 25;
-const int maxSpeedL = 2*baseSpeedL;
-const int maxSpeedR = 2*baseSpeedR;
+const int baseSpeedL = 19;
+const int baseSpeedR = 31;
+const int maxSpeedL = 20;
+const int maxSpeedR = 32;
 
 
 // PID variables
 double input, output, setpoint;
-double Kp = 0.002, Ki = 0.0, Kd = .003;  // Tune these!    //solid values:  Kp = 0.0078, Ki = 0.0, Kd = .0035  old kp value 0.002
+//double Kp = 0.001, Ki = 0.0, Kd = .002;  // Tune these!    //solid values:  Kp = 0.0078, Ki = 0.0, Kd = .0035  old kp value 0.002
+double Kp = .010, Kd = .00031, Ki = 0.0;
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 void setup() {
@@ -39,111 +40,92 @@ void setup() {
   pinMode(ENA, OUTPUT); pinMode(IN1, OUTPUT); pinMode(IN2, OUTPUT);
   pinMode(ENB, OUTPUT); pinMode(IN3, OUTPUT); pinMode(IN4, OUTPUT);
 
-  // configure the sensors
+  // Configure the sensors
   qtr.setTypeAnalog();
+
   qtr.setSensorPins((const uint8_t[]){A0, A1, A2, A3, A4, A5, A6, A7}, SensorCount);
+
   qtr.setEmitterPin(12);
-  //move wheel to show its done
-
-  digitalWrite(IN1, LOW);
-  digitalWrite(IN2, HIGH);
-  digitalWrite(IN3, LOW);
-  digitalWrite(IN4, HIGH);
-
-  analogWrite(ENA, 30);
-  analogWrite(ENB, 30);
-
-  analogWrite(ENA, 0);
-  analogWrite(ENB, 0);
 
   // PID setup
-  setpoint = 3500; // center of 0-5000 for 6 sensors
+  setpoint = 3500;
   pid.SetMode(AUTOMATIC);
-  pid.SetOutputLimits(-40, 40);  // restrict correction range, tune if needed
+  pid.SetOutputLimits(-40, 40);
 }
+
 
 void moveMotors(int direction, int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR) {
   //0 = backwards, 1 = forwards, 2 = left, 3 = right
   if (direction == 0){
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, HIGH);
-    digitalWrite(IN4, LOW);
-      
-  }
-  else if (direction == 1){
-    // Forward direction for both motors
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
+    leftSpeed-=3;
+    rightSpeed-=8;
+  }
+  else if (direction == 1){
+    // Forward direction for both motors
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
   }
   else if (direction == 2){
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
+    leftSpeed+=4;
+    rightSpeed-=4;
   }
   else if (direction == 3){
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
+    leftSpeed-=3;
   }
   analogWrite(ENA, constrain(abs(leftSpeed), 0, maxSpeedL));
   analogWrite(ENB, constrain(abs(rightSpeed), 0, maxSpeedR));
 }
 
-void stopMotors(int leftSpeed = baseSpeedL, int rightSpeed = baseSpeedR){
-  moveMotors(0, leftSpeed, rightSpeed);
+void stopMotors(){
+  moveMotors(0, baseSpeedL, baseSpeedR);
   delay(50);
   moveMotors(1, 0, 0);
 }
 
-void turn(bool direction, int time){
+void turn(bool direction, int time = 0){
   //0 = left, 1 = right
-  if (direction == 0){
-    moveMotors(2, maxSpeedL, maxSpeedR);
+  if (time != 0){
+    if (direction == 0){
+      moveMotors(2);
+    }
+    else{
+      moveMotors(3);
+    }
+    delay(time);
   }
   else{
-    moveMotors(3, maxSpeedL, maxSpeedR);
+    if (direction == 0){
+      moveMotors(2, 0, baseSpeedR);
+      delay(1950);
+    }
+    else{
+      moveMotors(3, baseSpeedL+5, 0);
+      delay(750);
+    }
   }
-  delay(time);
-  stopMotors();
-}
-
-
-void aimMotors(bool turnType){ 
-  stopMotors();
-  if (turnType == 1){
-    turn(1, 100);
-    stopMotors();
-    delay(500);
-    moveMotors(1, maxSpeedL, maxSpeedR);
-    delay(250);
-  }
-  else{
-    moveMotors(1, maxSpeedL, maxSpeedR);
-    delay(350);
-    stopMotors();
-    delay(250);
-    turn(0, 405);
-    stopMotors();
-    delay(500);
-    moveMotors(1, maxSpeedL, maxSpeedR);
-    delay(100);
-  }
-  stopMotors();
-  //delay(8000); use this when actually doit
-  delay(1000);
+  moveMotors(1, 0, 0);
 }
 
 bool crossCzech(uint16_t* sensorValues){
   int count = 0;
   for (int i = 0; i < 8; i++){
-    if(sensorValues[i] > 950){
+    if(sensorValues[i] > 700){
       count++;
-      if(count == 6){
+      if(count == 5){
         count = 0;
         return 1;
       }
@@ -157,7 +139,7 @@ bool puckCzech(uint16_t* sensorValues){
   for (int i = 0; i < 8; i++){
     if( (sensorValues[i] < 50)){
       count++;
-      if(count == 2){
+      if(count == 5){
         count = 0;
         return 1;
       }
@@ -185,6 +167,9 @@ void pidRun(uint16_t* sensorValues){
 
 void pidGo(int mode) {
 //0 is for puck, 1 is for cross
+  int startupDelay = 2500;
+  unsigned long startTime = millis();
+
   while (true){
     qtr.read(sensorValues);
     for (uint8_t i = 0; i < SensorCount; i++) {
@@ -195,127 +180,119 @@ void pidGo(int mode) {
         sensorValues[i] = 0; // Prevent divide by zero
       }
     }
-    if (mode == 0){
-      if (puckCzech(sensorValues) == 1){
-        return;
-      }
-      else{
-        pidRun(sensorValues);
-      }
-    }
+    //DEBUG CODEEEEEEE
+    // Serial.print("Mapped sensor values: ");
+    // for (uint8_t i = 0; i < SensorCount; i++) {
+    //   Serial.print(sensorValues[i]);
+    //   Serial.print("\t");
+    // }
 
-    else if (mode == 1){
-      if (crossCzech(sensorValues) == 1){
-        stopMotors();
-        return;
-      }
-      else{
-        pidRun(sensorValues);
-      }
+
+    Serial.println();
+    if (mode == 0 && puckCzech(sensorValues)) return;
+    if (mode == 1 && crossCzech(sensorValues)) {
+      stopMotors();
+      return;
     }
+    pidRun(sensorValues);
   }
-
-  
   stopMotors();
+}
 
+void fire(){
+    //fire
+  Serial.println(1);
+  delay(3000);
+  // moveMotors(1, 25, 20);
+  delay(250);
+  // stopMotors();
+  delay(1000);
 }
 
 void blackPuck(){
+  // pidGo(1);
+  // pidGo(1);
   //-------------BLACK PUCK--------------//
   moveMotors(1);
-  delay(1500);
-  stopMotors();
-  delay(debug);
+  delay(750);
 
   //turn right 90 deg then fire
-  turn(1, 365);
+  turn(1);
   delay(debug);
 
-  //go forward to 'eat puck' fully
-  moveMotors(1);
-  delay(500);
-  stopMotors();
-  delay(debug);
+  // //go forward to 'eat puck' fully
+  // moveMotors(1, baseSpeedL, baseSpeedR);
+  // delay(500);
+  // stopMotors();
+  // // delay(debug);
 
-  //fire
-  Serial.println(1);
-  delay(3000);
-  moveMotors(1, 15, 15);
-  delay(3000);
+  fire();
 
-  stopMotors();
-  delay(debug);
+  // stopMotors();
+  // delay(debug);
 
   //go back to line
   moveMotors(0);
-  delay(800);
-  stopMotors();
-  delay(debug);
+  delay(600);
+  // stopMotors();
+  // delay(debug);
 
-  turn(1, 330);
-  delay(debug);
+  turn(1, 600);
+  // delay(debug);
 
   moveMotors(1);
-  delay(2100);
-  stopMotors();
-  delay(debug);
+  delay(1200);
+  // stopMotors();
+  // delay(debug);
 
-  turn(1, 280);
+  turn(1, 550);
   stopMotors();
   delay(debug);
 }
 
 void yellowPuck(){
-    //---------------PUCK ONE---------------//
+    //---------------YELLOW PUCK ONE---------------//
 
   //pid until it seees puck
   pidGo(0);
+  moveMotors(1, baseSpeedL+1, 14);
+  delay(1500);
   //once it sees the puck it turns right
-  moveMotors(1, baseSpeedL/2, baseSpeedR*2);
-  delay(550);
+  //moveMotors(1, baseSpeedL*0, baseSpeedR*2);
+  //delay(200);
   //pid until it sees the cross
   pidGo(1);
   //aim then fire
-  aimMotors(0);
-
-  //break here for debug
-  stopMotors();
-  delay(debug);
-
-  Serial.println(1);
-  delay(3000);
-  moveMotors(1, 15, 15);
-  delay(3000);
+  moveMotors(1);
+  delay(250);
+  
+  moveMotors(2, 0, baseSpeedR);
+  delay(1890);
 
   stopMotors();
   delay(debug);
+
+  fire();
+
+  // stopMotors();
+  // delay(debug);
 
   //back up and return to line
   moveMotors(0);
-  delay(500);
-  turn(1, 420);
+  delay(900);
+  turn(1, 800);
 }
 
 void greenPuck(){
-  //---------------------PUCK TWO---------------//
+  //---------------------GREEN PUCK TWO---------------//
   //go after green
   pidGo(0);
-  moveMotors(1, (baseSpeedL/2)+10, baseSpeedR+10);
-  delay(500);
+  moveMotors(1, baseSpeedL+3, 15);
+  delay(850);
+  moveMotors(1, 0, 0);
+  delay(250);
 
-  //aim then fire
-  moveMotors(1);
-  delay(125);
-  stopMotors();
-  delay(debug);
-
-  aimMotors(1);
-  delay(debug);
-
-  Serial.println(1);
-  delay(3000);
-  moveMotors(1, 15, 15);
-  delay(3000);
+  fire();
 
   stopMotors();
   delay(debug);
@@ -323,7 +300,9 @@ void greenPuck(){
 
 void loop(){
   blackPuck();
+  //-------black done!!!
   yellowPuck();
+  //-------yellow done!!!
   greenPuck();
   delay(5000000);
 }
