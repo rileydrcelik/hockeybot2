@@ -36,12 +36,23 @@ void moveMotors(int speedL, int speedR){
   analogWrite(ENB, speedR);
 }
 
-void fire(){
-  moveMotors(255, 0);
-  delay(3000);
+void fire(int range){
+  if (range == 2){
+    moveMotors(255, 0);
+    delay(3000);
+  }
+  else if (range == 1){
+    moveMotors(255, 0);
+    delay(2000);
+  }
+  else if (range == 0){
+    moveMotors(255, 0);
+    delay(1000);
+  }
   moveMotors(255, 255);
-  delay(1000);
+  delay(500);
   moveMotors(0, 0);
+  
 }
 
 
@@ -49,8 +60,8 @@ void loop() {
   if (Serial.available() > 0) {
     String rx = Serial.readStringUntil('\n');
     int command = rx.toInt();
-    if (command == 1) {
-      fire();
+    if ((command == 1) || (command == 2) || (command == 0)) {
+      fire(command);
     }
   }
   delay(10);

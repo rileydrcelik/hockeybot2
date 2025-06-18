@@ -13,8 +13,8 @@
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
-uint16_t sensorMin[8] = {667, 608, 484, 427, 502, 507, 499, 629};
-uint16_t sensorMax[8] = {812, 756, 703, 643, 710, 757, 760, 798};
+uint16_t sensorMin[8] = {620, 558, 427, 372, 450, 462, 443, 572};
+uint16_t sensorMax[8] = {765, 732, 635, 590, 643, 651, 647, 736};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors) and debug delay
 const int baseSpeedL = 19;
@@ -25,7 +25,7 @@ const int debug = 2500;
 
 // PID variables
 double input, output, setpoint;
-double Kp = .010, Kd = .00031, Ki = 0.0;
+double Kp = .007, Kd = .0002, Ki = 0.0;
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 // === FUNCTION PROTOTYPES ===//
@@ -111,7 +111,6 @@ bool czech(uint16_t* sensorValues, int mode){
       if(sensorValues[i] > 700){
         count++;
         if(count == 5){
-          stopMotors();
           return 1;
         }
       }
@@ -119,7 +118,7 @@ bool czech(uint16_t* sensorValues, int mode){
   }
   else{
     //likewise if we read 5 sensors below 50 we know theres a break in the line = puck
-    for (int i = 1; i < 7; i++){
+    for (int i = 0; i < 8; i++){
       if(sensorValues[i] < 50){
         count++;
         if(count == 5){
@@ -160,45 +159,56 @@ void pidGo(int mode) {
   }
 }
 
-void fire(){
+void fire(int range){
     //tell other nano to fire, then wait!!!
-  Serial.println(1);
-  delay(4250);
+  Serial.println(range);
+  if (range == 0){
+    delay(1000);
+    moveMotors(1);
+    delay(250);
+    stopMotors();
+    delay(1000);
+  }
+  else if (range == 1){
+    delay(3250);
+  }
+  else if (range == 2){
+    delay(4250);
+  }
 }
 
 void blackPuck(){
     //move up, turn, then fire
   moveMotors(1, -1, -1, 750);
-  moveMotors(3, baseSpeedL+5, 0, 750, 1);
-  fire();
+  moveMotors(3, baseSpeedL+1, 0, 1200, 1);
+  fire(0);
     //go back to line
   moveMotors(0, -1, -1, 600);
   moveMotors(3, -1, -1, 600);
-  moveMotors(1, -1, -1, 1200);
-  moveMotors(3, -1, -1, 550, 1);
-  delay(debug);
+  moveMotors(1, -1, -1, 1330);
+  moveMotors(3, -1, -1, 400, 1);
 }
 
 void yellowPuck(){
     //pid until it seees puck, then turn
-  pidGo(0);
-  moveMotors(1, baseSpeedL+1, 14, 1500);
-    //pid until hits line, then aim and fire
   pidGo(1);
+  moveMotors(1, baseSpeedL+18, 2, 600);
+    //pid until hits line, then aim and fire
+  pidGo(0);
   moveMotors(1, -1, -1, 250);
-  moveMotors(2, 0, baseSpeedR, 1890, 1);
+  moveMotors(2, 0, baseSpeedR, 1340, 1);
   delay(debug);
-  fire();
+  fire(1);
     //back up and return to line
-  moveMotors(0, -1, -1, 900);
-  moveMotors(3, -1, -1, 800, 1);
+  moveMotors(0, -1, -1, 1000);
+  moveMotors(3, -1, -1, 450, 1);
 }
 
 void greenPuck(){
     //pid until it sees green puck, aim, then fire
-  pidGo(0);
-  moveMotors(1, baseSpeedL+3, 15, 850, 1);
-  fire();
+  pidGo(1);
+  moveMotors(1, baseSpeedL+3, 15, 500, 1);
+  fire(0);
 }
 
 void loop(){
