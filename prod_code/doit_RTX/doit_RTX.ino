@@ -17,15 +17,15 @@ uint16_t sensorMin[8] = {620, 558, 427, 372, 450, 462, 443, 572};
 uint16_t sensorMax[8] = {765, 732, 635, 590, 643, 651, 647, 736};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors) and debug delay
-const int baseSpeedL = 19;
-const int baseSpeedR = 31;
-const int maxSpeedL = 20;
-const int maxSpeedR = 32;
+const int baseSpeedL = 20; //19
+const int baseSpeedR = 36; //31
+const int maxSpeedL = 30; //20
+const int maxSpeedR = 42; //32
 const int debug = 2500;
 
 // PID variables
 double input, output, setpoint;
-double Kp = .007, Kd = .0002, Ki = 0.0;
+double Kp = .0035, Kd = .0002, Ki = 0.0; //Kp = .007, Kd = .0002, Ki = 0.0
 PID pid(&input, &output, &setpoint, Kp, Ki, Kd, DIRECT);
 
 // === FUNCTION PROTOTYPES ===//
@@ -121,7 +121,7 @@ bool czech(uint16_t* sensorValues, int mode){
     for (int i = 0; i < 8; i++){
       if(sensorValues[i] < 50){
         count++;
-        if(count == 5){
+        if(count == 3){
           return 1;
         }
       }
@@ -179,14 +179,14 @@ void fire(int range){
 
 void blackPuck(){
     //move up, turn, then fire
-  moveMotors(1, -1, -1, 750);
-  moveMotors(3, baseSpeedL+1, 0, 1200, 1);
-  fire(0);
+  moveMotors(1, -1, -1, 1100);
+  moveMotors(3, baseSpeedL+10, 0, 975, 1);
+  fire(2);
     //go back to line
-  moveMotors(0, -1, -1, 600);
-  moveMotors(3, -1, -1, 600);
-  moveMotors(1, -1, -1, 1330);
-  moveMotors(3, -1, -1, 400, 1);
+  moveMotors(0, -1, -1, 1200);
+  moveMotors(3, -1, -1, 1200);
+  moveMotors(1, -1, -1, 2500);
+  moveMotors(3, -1, -1, 500, 1);
 }
 
 void yellowPuck(){
@@ -213,6 +213,7 @@ void greenPuck(){
 
 void loop(){
   blackPuck();
+  delay(500);
   yellowPuck();
   greenPuck();
   while (true); //STOP
