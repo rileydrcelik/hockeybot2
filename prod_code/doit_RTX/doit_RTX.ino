@@ -180,34 +180,33 @@ void fire(int range){
 void blackPuck(){
     //move up, turn, then fire
   moveMotors(1, -1, -1, 1100);
-  moveMotors(3, baseSpeedL+10, 0, 975, 1);
-  fire(2);
+  moveMotors(3, baseSpeedL+10, 0, 955, 1);
+  fire(1);
     //go back to line
   moveMotors(0, -1, -1, 1200);
   moveMotors(3, -1, -1, 1200);
-  moveMotors(1, -1, -1, 2500);
-  moveMotors(3, -1, -1, 500, 1);
+  moveMotors(1, -1, -1, 2400);
+  moveMotors(3, -1, -1, 575, 1);
 }
 
 void yellowPuck(){
     //pid until it seees puck, then turn
   pidGo(1);
-  moveMotors(1, baseSpeedL+18, 2, 600);
+  moveMotors(1, baseSpeedL+12, 16, 750);
     //pid until hits line, then aim and fire
   pidGo(0);
   moveMotors(1, -1, -1, 250);
-  moveMotors(2, 0, baseSpeedR, 1340, 1);
-  delay(debug);
+  moveMotors(2, 0, baseSpeedR, 2100, 1);
   fire(1);
     //back up and return to line
   moveMotors(0, -1, -1, 1000);
-  moveMotors(3, -1, -1, 450, 1);
+  moveMotors(3, -1, -1, 1000, 1);
 }
 
 void greenPuck(){
     //pid until it sees green puck, aim, then fire
   pidGo(1);
-  moveMotors(1, baseSpeedL+3, 15, 500, 1);
+  moveMotors(1, baseSpeedL+3, 15, 650, 1);
   fire(0);
 }
 
