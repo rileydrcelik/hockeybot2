@@ -212,9 +212,13 @@ void greenPuck(){
 }
 
 void loop(){
-  blackPuck();
-  delay(500);
-  yellowPuck();
-  greenPuck();
-  while (true); //STOP
+  if (Serial.available() > 0) {
+    String rx = Serial.readStringUntil('\n');
+    int command = rx.toInt();
+    if (command == 1) {
+      blackPucks();
+      yellowPuck();
+      greenPuck();
+    }
+  }
 }

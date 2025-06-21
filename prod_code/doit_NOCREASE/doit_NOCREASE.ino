@@ -17,10 +17,10 @@ uint16_t sensorMin[8] = {620, 558, 427, 372, 450, 462, 443, 572};
 uint16_t sensorMax[8] = {765, 732, 635, 590, 643, 651, 647, 736};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors) and debug delay
-const int baseSpeedL = 20; //19
-const int baseSpeedR = 36; //31
-const int maxSpeedL = 30; //20
-const int maxSpeedR = 42; //32
+const int baseSpeedL = 25; //19
+const int baseSpeedR = 55; //31
+const int maxSpeedL = 40; //20
+const int maxSpeedR = 120; //32
 const int debug = 2500;
 
 // PID variables
@@ -180,15 +180,20 @@ void fire(int range){
 void blackPuck(){
     //move up, turn, then fire
   moveMotors(1, -1, -1, 1100);
-  moveMotors(3, baseSpeedL+10, 0, 965, 1);
+  moveMotors(3, baseSpeedL+10, 0, 945, 1); //range: 945-965
   fire(0);
     //go back to line
   moveMotors(0, -1, -1, 1200);
   moveMotors(3, -1, -1, 1200);
-  moveMotors(1, -1, -1, 2300);
-  moveMotors(3, -1, -1, 700, 1);
+  moveMotors(1, -1, -1, 2400);
+  moveMotors(3, -1, -1, 650, 1);
 }
 
+void rollBack(){
+  moveMotors(3, baseSpeedL+10, 0, 2735, 1);
+  fire(1);
+  moveMotors(3, baseSpeedL+10, 0, 1250);
+}
 
 void yellowPuck(){
     //pid until it seees puck, then turn
@@ -197,17 +202,18 @@ void yellowPuck(){
     //pid until hits line, then aim and fire
   pidGo(0);
   moveMotors(1, -1, -1, 250);
-  moveMotors(2, 0, baseSpeedR, 2270);
-  fire(1);
-    //back up and return to line
-  moveMotors(0, -1, -1, 1000);
-  moveMotors(3, -1, -1, 1000, 1);
+  // moveMotors(2, 0, baseSpeedR, 2270, 1);
+  // fire(1);
+  //   //back up and return to line
+  // moveMotors(0, -1, -1, 1000);
+  // moveMotors(3, -1, -1, 1000, 1);
+  rollBack();
 }
 
 void greenPuck(){
     //pid until it sees green puck, aim, then fire
   pidGo(1);
-  moveMotors(1, baseSpeedL+3, 15, 675, 1);
+  moveMotors(1, baseSpeedL+3, 15, 900, 1);
   fire(0);
 }
 
@@ -216,5 +222,6 @@ void loop(){
   delay(500);
   yellowPuck();
   greenPuck();
+  //moveMotors(1, maxSpeedL, maxSpeedR, 2500);
   while (true); //STOP
 }

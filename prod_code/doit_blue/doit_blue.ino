@@ -13,14 +13,14 @@
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
-uint16_t sensorMin[8] = {620, 558, 427, 372, 450, 462, 443, 572};
-uint16_t sensorMax[8] = {765, 732, 635, 590, 643, 651, 647, 736};
+uint16_t sensorMin[8] = {825, 767, 748, 726, 734, 711, 763, 806};
+uint16_t sensorMax[8] = {896, 860, 847, 830, 834, 819, 855, 884};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors) and debug delay
-const int baseSpeedL = 20; //19
-const int baseSpeedR = 36; //31
-const int maxSpeedL = 30; //20
-const int maxSpeedR = 42; //32
+const int baseSpeedL = 45; //19
+const int baseSpeedR = 60; //31
+const int maxSpeedL = 120; //20
+const int maxSpeedR = 120; //32
 const int debug = 2500;
 
 // PID variables
@@ -162,59 +162,71 @@ void pidGo(int mode) {
 void fire(int range){
     //tell other nano to fire, then wait!!!
   Serial.println(range);
+  delay(10);
   if (range == 0){
     delay(1000);
-    moveMotors(1);
-    delay(250);
-    stopMotors();
+    moveMotors(1, -1, -1, 250, 1);
     delay(1000);
   }
   else if (range == 1){
-    delay(3250);
+    delay(2000);
+    moveMotors(1, -1, -1, 250, 1);
+    delay(1000);
   }
   else if (range == 2){
-    delay(4250);
+    delay(3000);
+    moveMotors(1, -1, -1, 250, 1);
+    delay(1000);
   }
 }
 
 void blackPuck(){
     //move up, turn, then fire
-  moveMotors(1, -1, -1, 1100);
-  moveMotors(3, baseSpeedL+10, 0, 965, 1);
+  moveMotors(1, -1, -1, 500);
+  moveMotors(3, 0, baseSpeedR, 1250, 1);
   fire(0);
     //go back to line
-  moveMotors(0, -1, -1, 1200);
-  moveMotors(3, -1, -1, 1200);
-  moveMotors(1, -1, -1, 2300);
-  moveMotors(3, -1, -1, 700, 1);
+  moveMotors(0, -1, -1, 1250);
+  moveMotors(3, -1, -1, 900);
+  moveMotors(1, -1, -1, 1200);
+  moveMotors(3, 0, -1, 1150, 1);
 }
 
 
-void yellowPuck(){
+void greenPuck(){
     //pid until it seees puck, then turn
   pidGo(1);
-  moveMotors(1, baseSpeedL+12, 16, 750);
+  moveMotors(1, baseSpeedL-35, baseSpeedR+42, 1000);
     //pid until hits line, then aim and fire
   pidGo(0);
   moveMotors(1, -1, -1, 250);
-  moveMotors(2, 0, baseSpeedR, 2270);
-  fire(1);
+  moveMotors(2, -1, 0 , 1250, 1);
+  fire(2);
     //back up and return to line
   moveMotors(0, -1, -1, 1000);
-  moveMotors(3, -1, -1, 1000, 1);
+  moveMotors(3, -1, 0, 1250, 1);
 }
 
-void greenPuck(){
+void yellowPuck(){
     //pid until it sees green puck, aim, then fire
   pidGo(1);
-  moveMotors(1, baseSpeedL+3, 15, 675, 1);
+  moveMotors(1, baseSpeedL-15, baseSpeedR+12, 825, 1);
   fire(0);
 }
 
 void loop(){
+  // if (Serial.available() > 0) {
+  //   String rx = Serial.readStringUntil('\n');
+  //   int command = rx.toInt();
+  //   if (command > 0) {
+  //     blackPuck();
+  //     greenPuck();
+  //     yellowPuck();
+  //   }
+  // }
+
   blackPuck();
-  delay(500);
-  yellowPuck();
   greenPuck();
-  while (true); //STOP
+  yellowPuck();
+  while(true);
 }
