@@ -13,12 +13,13 @@
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
-uint16_t sensorMin[8] = {620, 558, 427, 372, 450, 462, 443, 572};
-uint16_t sensorMax[8] = {765, 732, 635, 590, 643, 651, 647, 736};
+
+uint16_t sensorMin[8] = {703, 620, 507, 439, 496, 509, 501, 627};
+uint16_t sensorMax[8] = {854, 803, 740, 700, 735, 755, 757,827};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors) and debug delay
-const int baseSpeedL = 25; //19
-const int baseSpeedR = 55; //31
+const int baseSpeedL = 28; //19
+const int baseSpeedR = 62; //31
 const int maxSpeedL = 40; //20
 const int maxSpeedR = 120; //32
 const int debug = 2500;
@@ -183,7 +184,7 @@ void fire(int range){
 void blackPuck(){
     //move up, turn, then fire
   moveMotors(1, -1, -1, 1100);
-  moveMotors(3, baseSpeedL+10, 0, 1450, 1);
+  moveMotors(3, baseSpeedL+10, 0, 1420, 1);
   fire(0);
     //go back to line
   moveMotors(0, -1, -1, 1200);
@@ -195,29 +196,36 @@ void blackPuck(){
 
 void yellowPuck(){
     //pid until it seees puck, then turn
-  moveMotors(1, -1, -1, 500);
-  moveMotors(3, baseSpeedL+10, 0, 950);
-  pidGo(1);
-  moveMotors(1, baseSpeedL+14, 20, 750);
-    //pid until hits line, then aim and fire
-  pidGo(0);
   moveMotors(1, -1, -1, 250);
-  moveMotors(2, 0, baseSpeedR, 2075, 1);
-  fire(1);
+  moveMotors(3, baseSpeedL+10, 0, 1400);
+  stopMotors();
+  delay(2500);
+
+  //pidGo(1);
+  //moveMotors(1, baseSpeedL+14, 20, 750);
+    //pid until hits line, then aim and fire
+  //pidGo(0);
+  moveMotors(1, -1, -1, 2550);
+  moveMotors(1, baseSpeedL+14, 15, 700);
+  moveMotors(1, -1, -1, 600);
+  moveMotors(2, 0, baseSpeedR, 1480, 1);
+  fire(2);
     //back up and return to line
   moveMotors(0, -1, -1, 1000);
-  moveMotors(3, -1, -1, 850, 1);
+  moveMotors(3, -1, -1, 550, 1);
 }
 
 void greenPuck(){
     //pid until it sees green puck, aim, then fire
-  pidGo(1);
-  moveMotors(1, baseSpeedL+3, 15, 850, 1);
+  //pidGo(1);
+  moveMotors(1, -1, -1, 1000);
+  moveMotors(1, baseSpeedL+3, 15, 900, 1);
   fire(0);
 }
 
 void loop(){
   //blackPuck();
+  delay(500);
   yellowPuck();
   greenPuck();
   stopMotors();

@@ -13,8 +13,10 @@
 const uint8_t SensorCount = 8;
 QTRSensors qtr;
 uint16_t sensorValues[SensorCount];
-uint16_t sensorMin[8] = {825, 767, 748, 726, 734, 711, 763, 806};
-uint16_t sensorMax[8] = {896, 860, 847, 830, 834, 819, 855, 884};
+// uint16_t sensorMin[8] = {825, 767, 748, 726, 734, 711, 763, 806};
+// uint16_t sensorMax[8] = {896, 860, 847, 830, 834, 819, 855, 884};
+uint16_t sensorMin[8] = {814, 750, 731, 708, 715, 690, 745, 796};
+uint16_t sensorMax[8] = {921, 886, 872, 858, 861, 851, 877, 905};
 
 // Motor speed limits and base speeds (tuned for your mismatched motors) and debug delay
 const int baseSpeedL = 45; //19
@@ -183,50 +185,59 @@ void fire(int range){
 void blackPuck(){
     //move up, turn, then fire
   moveMotors(1, -1, -1, 500);
-  moveMotors(3, 0, baseSpeedR, 1250, 1);
+  moveMotors(3, 0, baseSpeedR, 1135, 1);
   fire(0);
     //go back to line
   moveMotors(0, -1, -1, 1250);
-  moveMotors(3, -1, -1, 900);
-  moveMotors(1, -1, -1, 1200);
-  moveMotors(3, 0, -1, 1150, 1);
+  moveMotors(3, 0, -1, 1150);
+  moveMotors(1, -1, -1, 850);
+  moveMotors(3, 0, -1, 1350, 1);
 }
 
 
 void greenPuck(){
     //pid until it seees puck, then turn
-  pidGo(1);
-  moveMotors(1, baseSpeedL-35, baseSpeedR+42, 1000);
+  //pidGo(1);
+  moveMotors(1, -1, baseSpeedR+2, 1950);
+  moveMotors(1, baseSpeedL-40, baseSpeedR+42, 1000);
     //pid until hits line, then aim and fire
-  pidGo(0);
-  moveMotors(1, -1, -1, 250);
-  moveMotors(2, -1, 0 , 1250, 1);
+  //pidGo(0);
+  moveMotors(1, -1, -1, 700);
+  moveMotors(1, -1, -1, 200);
+  moveMotors(2, -1, 0 , 1100, 1);
   fire(2);
     //back up and return to line
-  moveMotors(0, -1, -1, 1000);
-  moveMotors(3, -1, 0, 1250, 1);
+  moveMotors(0, -1, -1, 150);
+  moveMotors(3, baseSpeedL+10, 0, 1000, 1);
 }
 
 void yellowPuck(){
     //pid until it sees green puck, aim, then fire
-  pidGo(1);
-  moveMotors(1, baseSpeedL-15, baseSpeedR+12, 825, 1);
+  //pidGo(1);
+  moveMotors(1, -1, -1, 650);
+  moveMotors(1, baseSpeedL-25, baseSpeedR+25, 855, 1);
   fire(0);
 }
 
 void loop(){
-  // if (Serial.available() > 0) {
-  //   String rx = Serial.readStringUntil('\n');
-  //   int command = rx.toInt();
-  //   if (command > 0) {
-  //     blackPuck();
-  //     greenPuck();
-  //     yellowPuck();
-  //   }
-  // }
+  // blackPuck();
+  // delay(debug);
+  // greenPuck();
+  // yellowPuck();
+  if (Serial.available() > 0) {
+    String rx = Serial.readStringUntil('\n');
+    int command = rx.toInt();
+    if (command > 0) {
+      delay(1500);
+      blackPuck();
+      delay(debug);
+      greenPuck();
+      yellowPuck();
+    }
+  }
 
-  blackPuck();
-  greenPuck();
-  yellowPuck();
-  while(true);
+  // blackPuck();
+  // greenPuck();
+  // yellowPuck();
+  //while(true);
 }
